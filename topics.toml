@@ -28,12 +28,20 @@ show_items = 6
 # -----------------------------------------------------------
 
 [[topics]]
-name = "物流DX"
-query = "物流DX"
+name = "物流 DX"
+query = "物流 DX"
 
 [[topics]]
 name = "生成AI"
 query = "生成AI"
+
+[[topics]]
+name = "DX推進"
+query = "DX推進"
+
+[[topics]]
+name = "倉庫"
+query = "倉庫"
 
 [[topics]]
 name = "航空貨物"
