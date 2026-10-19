@@ -64,7 +64,19 @@ def parse_items(xml_bytes):
     return items
 
 
-def render_card(topic, items, error):
+def render_item(item):
+    date = item["published"].strftime("%m/%d %H:%M") if item["published"] else ""
+    return (
+        "<li>"
+        f'<a href="{html.escape(item["link"])}" target="_blank" rel="noopener">'
+        f'<span class="headline">{html.escape(item["title"])}</span>'
+        f'<span class="meta"><span class="source">{html.escape(item["source"])}</span>'
+        f'<time>{date}</time></span>'
+        "</a></li>"
+    )
+
+
+def render_card(topic, items, error, show_items):
     name = html.escape(topic["name"])
     search_url = html.escape(
         "https://news.google.com/search?q="
@@ -76,18 +88,16 @@ def render_card(topic, items, error):
     elif not items:
         body = '<p class="message">該当するニュースがありません。</p>'
     else:
-        rows = []
-        for item in items:
-            date = item["published"].strftime("%m/%d %H:%M") if item["published"] else ""
-            rows.append(
-                "<li>"
-                f'<a href="{html.escape(item["link"])}" target="_blank" rel="noopener">'
-                f'<span class="headline">{html.escape(item["title"])}</span>'
-                f'<span class="meta"><span class="source">{html.escape(item["source"])}</span>'
-                f'<time>{date}</time></span>'
-                "</a></li>"
+        shown, hidden = items[:show_items], items[show_items:]
+        body = '<ul class="news-list">' + "".join(map(render_item, shown)) + "</ul>"
+        # 残りの記事は「続きを表示」をタップすると開く（JavaScript不要の<details>を使用）
+        if hidden:
+            body += (
+                '<details class="rest">'
+                f"<summary>続きを表示（{len(hidden)}件）</summary>"
+                '<ul class="news-list">' + "".join(map(render_item, hidden)) + "</ul>"
+                "</details>"
             )
-        body = '<ul class="news-list">' + "".join(rows) + "</ul>"
     return (
         '<section class="card">'
         f'<h2 class="card-title">{name}</h2>'
@@ -129,6 +139,7 @@ def render_page(title, subtitle, cards, updated_at):
 def main():
     config = load_config()
     max_items = int(config.get("max_items", 10))
+    show_items = int(config.get("show_items", max_items))
     cards = []
     failures = 0
     for topic in config["topics"]:
@@ -140,7 +151,7 @@ def main():
             error = True
             failures += 1
             print(f"[NG] {topic['name']}: {e}", file=sys.stderr)
-        cards.append(render_card(topic, items, error))
+        cards.append(render_card(topic, items, error, show_items))
 
     if failures == len(config["topics"]):
         sys.exit("すべてのトピックで取得に失敗したため、ページを更新しませんでした。")
