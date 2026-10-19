@@ -97,8 +97,9 @@ def render_card(topic, items, error):
     )
 
 
-def render_page(title, cards, updated_at):
+def render_page(title, subtitle, cards, updated_at):
     title = html.escape(title)
+    subtitle_html = f'\n      <p class="subtitle">{html.escape(subtitle)}</p>' if subtitle else ""
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -110,7 +111,9 @@ def render_page(title, cards, updated_at):
 <body>
 <header class="site-header">
   <div class="inner">
-    <h1>{title}</h1>
+    <div class="titles">
+      <h1>{title}</h1>{subtitle_html}
+    </div>
     <p class="updated">最終更新：{updated_at.strftime("%Y/%m/%d %H:%M")}</p>
   </div>
 </header>
@@ -143,7 +146,12 @@ def main():
         sys.exit("すべてのトピックで取得に失敗したため、ページを更新しませんでした。")
 
     OUTPUT_DIR.mkdir(exist_ok=True)
-    page = render_page(config.get("title", "ニュースダッシュボード"), cards, datetime.now(JST))
+    page = render_page(
+        config.get("title", "ニュースダッシュボード"),
+        config.get("subtitle", ""),
+        cards,
+        datetime.now(JST),
+    )
     (OUTPUT_DIR / "index.html").write_text(page, encoding="utf-8")
     shutil.copy(TEMPLATE_DIR / "style.css", OUTPUT_DIR / "style.css")
     print(f"{OUTPUT_DIR / 'index.html'} を作成しました。")

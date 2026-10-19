@@ -54,6 +54,12 @@ body {
   font-size: 1.3rem;
 }
 
+.subtitle {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
 .updated {
   margin: 0;
   font-size: 0.85rem;
