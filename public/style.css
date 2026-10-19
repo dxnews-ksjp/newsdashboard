@@ -1,5 +1,6 @@
 :root {
   --accent: #d6001c;
+  --header: #005b99;
   --bg: #f2f3f5;
   --card: #ffffff;
   --text: #1a1a1a;
@@ -33,7 +34,7 @@ body {
 }
 
 .site-header {
-  background: var(--accent);
+  background: var(--header);
   color: #fff;
 }
 
