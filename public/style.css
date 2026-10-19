@@ -1,6 +1,5 @@
 :root {
-  --accent: #d6001c;
-  --header: #005b99;
+  --accent: #005b99;
   --bg: #f2f3f5;
   --card: #ffffff;
   --text: #1a1a1a;
@@ -34,7 +33,7 @@ body {
 }
 
 .site-header {
-  background: var(--header);
+  background: var(--accent);
   color: #fff;
 }
 
@@ -124,6 +123,28 @@ body {
   margin-top: 2px;
   font-size: 0.75rem;
   color: var(--sub);
+}
+
+.rest {
+  border-top: 1px solid var(--line);
+}
+
+.rest summary {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  list-style: none;
+}
+
+.rest summary::-webkit-details-marker { display: none; }
+.rest summary::after { content: " ▼"; font-size: 0.7rem; }
+.rest[open] summary::after { content: " ▲"; }
+.rest[open] summary { border-bottom: 1px solid var(--line); }
+
+@media (prefers-color-scheme: dark) {
+  .rest summary { color: #6fb3e6; }
 }
 
 .message {
