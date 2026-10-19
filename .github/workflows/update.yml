@@ -1,0 +1,63 @@
+name: ニュース更新
+
+on:
+  schedule:
+    # 毎日 22:00 UTC ＝ 日本時間 朝7:00（GitHubの混雑で数分〜数十分遅れることがあります）
+    - cron: "0 22 * * *"
+  # Actions 画面の「Run workflow」ボタンで手動実行できるようにする
+  workflow_dispatch:
+  # 設定ファイルなどを変更したときにもすぐ作り直す
+  push:
+    paths:
+      - "topics.toml"
+      - "scripts/**"
+      - "templates/**"
+      - ".github/workflows/update.yml"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: news-update
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: ニュースを取得してページを作成
+        run: python scripts/build.py
+
+      # 生成したページをリポジトリにも保存（毎日コミットがあることで、定期実行が自動停止されるのを防ぎます）
+      - name: 生成ページをコミット
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public
+          if git diff --cached --quiet; then
+            echo "変更なし"
+          else
+            git commit -m "ニュースを更新 ($(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M'))"
+            git push
+          fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: GitHub Pages に公開
+        id: deployment
+        uses: actions/deploy-pages@v4
