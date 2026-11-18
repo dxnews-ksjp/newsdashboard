@@ -140,7 +140,7 @@ def render_tabs(tabs, cards_by_tab):
 
 def render_page(title, subtitle, content, updated_at):
     title = html.escape(title)
-    subtitle_html = f'\n      <p class="subtitle">{html.escape(subtitle)}</p>' if subtitle else ""
+    subtitle_html = f'\n        <p class="subtitle">{html.escape(subtitle)}</p>' if subtitle else ""
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -152,8 +152,11 @@ def render_page(title, subtitle, content, updated_at):
 <body>
 <header class="site-header">
   <div class="inner">
-    <div class="titles">
-      <h1>{title}</h1>{subtitle_html}
+    <div class="brand">
+      <img class="character" src="character.png" alt="" width="286" height="281">
+      <div class="titles">
+        <h1>{title}</h1>{subtitle_html}
+      </div>
     </div>
     <p class="updated">最終更新：{updated_at.strftime("%Y/%m/%d %H:%M")}</p>
   </div>
@@ -200,7 +203,10 @@ def main():
         datetime.now(JST),
     )
     (OUTPUT_DIR / "index.html").write_text(page, encoding="utf-8")
-    shutil.copy(TEMPLATE_DIR / "style.css", OUTPUT_DIR / "style.css")
+    # デザイン用のファイル（style.css・キャラクター画像など）を公開フォルダへコピー
+    for asset in TEMPLATE_DIR.iterdir():
+        if asset.is_file():
+            shutil.copy(asset, OUTPUT_DIR / asset.name)
     print(f"{OUTPUT_DIR / 'index.html'} を作成しました。")
 
 

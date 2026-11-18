@@ -17,6 +17,7 @@
 | `topics.toml` | **トピックの設定（ここだけ書き換えればOK）** |
 | `scripts/build.py` | ニュースを集めてページを作るプログラム |
 | `templates/style.css` | ページのデザイン |
+| `templates/character.png` | ページ上部のキャラクター画像（同じ名前で差し替えればOK） |
 | `public/` | 自動で作られるページ（手で編集しない） |
 | `.github/workflows/update.yml` | 毎朝の自動実行の設定 |
 
