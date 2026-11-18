@@ -107,7 +107,38 @@ def render_card(topic, items, error, show_items):
     )
 
 
-def render_page(title, subtitle, cards, updated_at):
+def render_tabs(tabs, cards_by_tab):
+    """タブ切り替え部分を作る。JavaScriptを使わず、ラジオボタン＋CSSで切り替える。"""
+    if not tabs:  # タブ設定がない場合は従来どおり全カードを1画面に並べる
+        cards = [c for group in cards_by_tab.values() for c in group]
+        return f'<main class="grid">\n{chr(10).join(cards)}\n</main>'
+
+    radios, labels, panels, rules = [], [], [], []
+    for i, tab in enumerate(tabs):
+        tab_id = f"tab{i}"
+        name = html.escape(tab["name"])
+        color = html.escape(tab.get("color", "#005b99"))
+        checked = " checked" if i == 0 else ""  # いちばん左のタブを最初に表示
+        radios.append(f'<input type="radio" name="tabs" id="{tab_id}" class="tab-radio"{checked}>')
+        labels.append(f'<label for="{tab_id}" class="tab" style="--tab-color: {color}">{name}</label>')
+        cards = cards_by_tab.get(tab["name"], [])
+        body = chr(10).join(cards) or '<p class="message">このタブにはトピックがありません。</p>'
+        panels.append(f'<main class="grid panel" id="panel-{tab_id}">\n{body}\n</main>')
+        rules.append(f"#{tab_id}:checked ~ #panel-{tab_id} {{ display: grid; }}")
+        rules.append(
+            f"#{tab_id}:checked ~ .tab-bar label[for={tab_id}] "
+            "{ background: var(--tab-color); color: #fff; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25); }"
+        )
+        rules.append(f"#{tab_id}:focus-visible ~ .tab-bar label[for={tab_id}] {{ outline: 3px solid var(--tab-color); outline-offset: 2px; }}")
+    return (
+        "<style>\n" + "\n".join(rules) + "\n</style>\n"
+        + "\n".join(radios) + "\n"
+        + '<nav class="tab-bar"><div class="inner">' + "".join(labels) + "</div></nav>\n"
+        + "\n".join(panels)
+    )
+
+
+def render_page(title, subtitle, content, updated_at):
     title = html.escape(title)
     subtitle_html = f'\n      <p class="subtitle">{html.escape(subtitle)}</p>' if subtitle else ""
     return f"""<!doctype html>
@@ -127,9 +158,7 @@ def render_page(title, subtitle, cards, updated_at):
     <p class="updated">最終更新：{updated_at.strftime("%Y/%m/%d %H:%M")}</p>
   </div>
 </header>
-<main class="grid">
-{chr(10).join(cards)}
-</main>
+{content}
 <footer class="site-footer">出典：Googleニュース　／　毎朝7時ごろ自動更新</footer>
 </body>
 </html>
@@ -140,7 +169,9 @@ def main():
     config = load_config()
     max_items = int(config.get("max_items", 10))
     show_items = int(config.get("show_items", max_items))
-    cards = []
+    tabs = config.get("tabs", [])
+    tab_names = [t["name"] for t in tabs]
+    cards_by_tab = {}
     failures = 0
     for topic in config["topics"]:
         items, error = [], False
@@ -151,7 +182,12 @@ def main():
             error = True
             failures += 1
             print(f"[NG] {topic['name']}: {e}", file=sys.stderr)
-        cards.append(render_card(topic, items, error, show_items))
+        # tab の指定がない・タブ名が見つからないトピックは、いちばん左のタブに表示する
+        tab = topic.get("tab", "")
+        if tab_names and tab not in tab_names:
+            print(f"[注意] {topic['name']}: タブ「{tab}」が見つからないため「{tab_names[0]}」に表示します", file=sys.stderr)
+            tab = tab_names[0]
+        cards_by_tab.setdefault(tab, []).append(render_card(topic, items, error, show_items))
 
     if failures == len(config["topics"]):
         sys.exit("すべてのトピックで取得に失敗したため、ページを更新しませんでした。")
@@ -160,7 +196,7 @@ def main():
     page = render_page(
         config.get("title", "ニュースダッシュボード"),
         config.get("subtitle", ""),
-        cards,
+        render_tabs(tabs, cards_by_tab),
         datetime.now(JST),
     )
     (OUTPUT_DIR / "index.html").write_text(page, encoding="utf-8")

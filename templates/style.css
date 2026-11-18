@@ -65,6 +65,53 @@ body {
   opacity: 0.9;
 }
 
+/* ---------- タブ ---------- */
+.tab-radio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tab-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.tab-bar .inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.tab {
+  flex: 0 1 180px;
+  padding: 10px 16px;
+  border: 2px solid var(--tab-color);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--tab-color);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+
+.tab:hover { transform: translateY(-1px); }
+.tab:active { transform: translateY(1px); }
+
+.grid.panel { display: none; }
+
+/* 選ばれているタブの塗りつぶしは build.py がページ内に書き出します（色は topics.toml） */
+
 .grid {
   max-width: 1200px;
   margin: 0 auto;
@@ -178,4 +225,6 @@ body {
     gap: 12px;
   }
   .site-header h1 { font-size: 1.1rem; }
+  .tab-bar .inner { padding: 8px 12px; gap: 8px; }
+  .tab { flex: 1 1 0; padding: 9px 8px; }
 }
