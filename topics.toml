@@ -24,6 +24,10 @@ name = "経済"
 color = "#e8590c"
 
 [[tabs]]
+name = "AI・DX"
+color = "#6f42c1"
+
+[[tabs]]
 name = "物流"
 color = "#0b8a5a"
 
@@ -45,12 +49,12 @@ name = "決算"
 query = "決算"
 
 [[topics]]
-tab = "経済"
+tab = "AI・DX"
 name = "生成AI"
 query = "生成AI -ポルノ -彼女 -変態 -アダルト -エロ"
 
 [[topics]]
-tab = "経済"
+tab = "AI・DX"
 name = "DX推進"
 query = "DX推進"
 
