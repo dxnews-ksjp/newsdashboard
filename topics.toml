@@ -50,6 +50,11 @@ query = "決算"
 
 [[topics]]
 tab = "AI・DX"
+name = "物流 DX"
+query = "物流 DX"
+
+[[topics]]
+tab = "AI・DX"
 name = "生成AI"
 query = "生成AI -ポルノ -彼女 -変態 -アダルト -エロ"
 
@@ -57,11 +62,6 @@ query = "生成AI -ポルノ -彼女 -変態 -アダルト -エロ"
 tab = "AI・DX"
 name = "DX推進"
 query = "DX推進"
-
-[[topics]]
-tab = "物流"
-name = "物流 DX"
-query = "物流 DX"
 
 [[topics]]
 tab = "物流"
