@@ -1,56 +1,125 @@
+/* ===========================================================
+   今朝のニュース － グラスモーフィズム（すりガラス風）デザイン
+   色の背景の上に、半透明でぼかしたガラスのパネルを重ねています。
+   =========================================================== */
+
 :root {
   --accent: #005b99;
-  --bg: #f2f3f5;
-  --card: #ffffff;
-  --text: #1a1a1a;
-  --sub: #6b6b6b;
-  --line: #e6e6e6;
-  --hover: #f7f7f9;
+  --text: #16202c;
+  --sub: #4f5b69;
   --link-visited: #6a3d9a;
+
+  /* ガラスの見た目 */
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-strong: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-line: rgba(22, 32, 44, 0.08);
+  --glass-hover: rgba(255, 255, 255, 0.55);
+  --glass-shadow: 0 8px 32px rgba(31, 52, 92, 0.14);
+  --blur: blur(18px) saturate(160%);
+
+  /* ヘッダー（青みのあるガラス） */
+  --header-glass: rgba(0, 76, 140, 0.55);
+
+  /* 背景のグラデーション */
+  --bg-base: #e9f0f8;
+  --blob-1: rgba(0, 123, 214, 0.45);   /* 青 */
+  --blob-2: rgba(111, 66, 193, 0.35);  /* 紫（AI・DX） */
+  --blob-3: rgba(232, 89, 12, 0.30);   /* オレンジ（経済） */
+  --blob-4: rgba(11, 138, 90, 0.30);   /* グリーン（物流） */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #15171a;
-    --card: #202327;
-    --text: #e8e8e8;
-    --sub: #9a9fa6;
-    --line: #33373c;
-    --hover: #2a2e33;
-    --link-visited: #b79ce0;
+    --text: #eaf0f7;
+    --sub: #a7b3c2;
+    --link-visited: #c4a8f0;
+
+    --glass: rgba(24, 30, 42, 0.55);
+    --glass-strong: rgba(24, 30, 42, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-line: rgba(255, 255, 255, 0.08);
+    --glass-hover: rgba(255, 255, 255, 0.06);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+
+    --header-glass: rgba(0, 60, 115, 0.5);
+
+    --bg-base: #0d1420;
+    --blob-1: rgba(0, 110, 200, 0.45);
+    --blob-2: rgba(111, 66, 193, 0.40);
+    --blob-3: rgba(232, 89, 12, 0.25);
+    --blob-4: rgba(11, 138, 90, 0.30);
   }
 }
 
 * { box-sizing: border-box; }
 
+html { background: var(--bg-base); }
+
 body {
   margin: 0;
-  background: var(--bg);
+  min-height: 100vh;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
     "Noto Sans JP", Meiryo, sans-serif;
   line-height: 1.5;
 }
 
+/* ガラスの後ろに見える、ぼんやりした色の背景（画面に固定） */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 8% 12%, var(--blob-1), transparent 42%),
+    radial-gradient(circle at 92% 8%, var(--blob-2), transparent 40%),
+    radial-gradient(circle at 85% 85%, var(--blob-3), transparent 42%),
+    radial-gradient(circle at 12% 90%, var(--blob-4), transparent 40%),
+    var(--bg-base);
+}
+
+/* ---------- ページトップ（ヘッダー） ---------- */
 .site-header {
-  background: var(--accent);
+  max-width: 1200px;
+  margin: 16px auto 0;
+  padding: 0 16px;
   color: #fff;
 }
 
 .site-header .inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 14px 16px;
+  padding: 14px 20px;
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 4px 16px;
+  background: var(--header-glass);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 20px;
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.character {
+  width: 84px;
+  height: auto;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
 }
 
 .site-header h1 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 .subtitle {
@@ -61,10 +130,67 @@ body {
 
 .updated {
   margin: 0;
-  font-size: 0.85rem;
-  opacity: 0.9;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
 }
 
+/* ---------- タブ ---------- */
+.tab-radio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tab-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 16px 0;
+}
+
+.tab-bar .inner {
+  padding: 8px;
+  display: flex;
+  gap: 8px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+}
+
+.tab {
+  flex: 0 1 180px;
+  padding: 9px 16px;
+  border: 2px solid var(--tab-color);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--tab-color);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, color 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tab { background: rgba(255, 255, 255, 0.06); filter: brightness(1.35); }
+}
+
+.tab:hover { transform: translateY(-1px); }
+.tab:active { transform: translateY(1px); }
+
+/* 選ばれているタブの塗りつぶしは build.py がページ内に書き出します（色は topics.toml） */
+
+/* ---------- カード ---------- */
 .grid {
   max-width: 1200px;
   margin: 0 auto;
@@ -75,19 +201,34 @@ body {
   align-items: start;
 }
 
+.grid.panel { display: none; }
+
 .card {
-  background: var(--card);
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
   overflow: hidden;
 }
 
 .card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
-  padding: 10px 14px;
+  padding: 12px 16px;
   font-size: 1.05rem;
-  border-left: 5px solid var(--accent);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--glass-line);
+}
+
+.card-title::before {
+  content: "";
+  width: 6px;
+  height: 1.1em;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #2b9be8, var(--accent));
 }
 
 .news-list {
@@ -97,17 +238,18 @@ body {
 }
 
 .news-list li + li {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--glass-line);
 }
 
 .news-list a {
   display: block;
-  padding: 10px 14px;
+  padding: 10px 16px;
   color: var(--text);
   text-decoration: none;
+  transition: background 0.15s;
 }
 
-.news-list a:hover { background: var(--hover); }
+.news-list a:hover { background: var(--glass-hover); }
 .news-list a:hover .headline { text-decoration: underline; }
 .news-list a:visited .headline { color: var(--link-visited); }
 
@@ -126,11 +268,11 @@ body {
 }
 
 .rest {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--glass-line);
 }
 
 .rest summary {
-  padding: 8px 14px;
+  padding: 8px 16px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--accent);
@@ -141,7 +283,7 @@ body {
 .rest summary::-webkit-details-marker { display: none; }
 .rest summary::after { content: " ▼"; font-size: 0.7rem; }
 .rest[open] summary::after { content: " ▲"; }
-.rest[open] summary { border-bottom: 1px solid var(--line); }
+.rest[open] summary { border-bottom: 1px solid var(--glass-line); }
 
 @media (prefers-color-scheme: dark) {
   .rest summary { color: #6fb3e6; }
@@ -149,20 +291,22 @@ body {
 
 .message {
   margin: 0;
-  padding: 16px 14px;
+  padding: 16px;
   color: var(--sub);
   font-size: 0.9rem;
 }
 
 .more {
   display: block;
-  padding: 8px 14px;
-  border-top: 1px solid var(--line);
+  padding: 8px 16px;
+  border-top: 1px solid var(--glass-line);
   text-align: right;
   font-size: 0.8rem;
   color: var(--sub);
   text-decoration: none;
 }
+
+.more:hover { background: var(--glass-hover); }
 
 .site-footer {
   padding: 8px 16px 24px;
@@ -171,11 +315,24 @@ body {
   color: var(--sub);
 }
 
+/* すりガラス効果（backdrop-filter）が使えない古いブラウザでは、少し濃い色にして読みやすくする */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --glass: rgba(255, 255, 255, 0.88); --glass-strong: rgba(255, 255, 255, 0.92); }
+  .site-header .inner { background: #005b99; }
+}
+
+/* ---------- スマホ ---------- */
 @media (max-width: 600px) {
+  .site-header { margin-top: 12px; padding: 0 12px; }
+  .site-header .inner { padding: 12px 14px; border-radius: 16px; }
+  .site-header h1 { font-size: 1.15rem; }
+  .character { width: 64px; }
+  .tab-bar { padding: 10px 12px 0; }
+  .tab-bar .inner { padding: 6px; gap: 6px; }
+  .tab { flex: 1 1 0; padding: 8px 6px; font-size: 1rem; letter-spacing: 0.05em; }
   .grid {
     grid-template-columns: 1fr;
     padding: 12px;
     gap: 12px;
   }
-  .site-header h1 { font-size: 1.1rem; }
 }
