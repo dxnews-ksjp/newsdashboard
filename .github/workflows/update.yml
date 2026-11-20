@@ -36,7 +36,13 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: AI（Claude）を使う準備
+        run: pip install anthropic
+
       - name: ニュースを取得してページを作成
+        env:
+          # GitHub の Settings → Secrets に登録した Claude の APIキー（未登録でもページは作られます）
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python scripts/build.py
 
       # 生成したページをリポジトリにも保存（毎日コミットがあることで、定期実行が自動停止されるのを防ぎます）
