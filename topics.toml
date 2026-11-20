@@ -49,6 +49,16 @@ name = "決算"
 query = "決算"
 
 [[topics]]
+tab = "経済"
+name = "株価"
+query = "株価"
+
+[[topics]]
+tab = "経済"
+name = "増益"
+query = "増益"
+
+[[topics]]
 tab = "AI・DX"
 name = "物流 DX"
 query = "物流 DX"
