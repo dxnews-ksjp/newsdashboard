@@ -18,9 +18,6 @@
   --glass-shadow: 0 8px 32px rgba(31, 52, 92, 0.14);
   --blur: blur(18px) saturate(160%);
 
-  /* ヘッダー（青みのあるガラス） */
-  --header-glass: rgba(0, 76, 140, 0.55);
-
   /* 背景のグラデーション */
   --bg-base: #e9f0f8;
   --blob-1: rgba(0, 123, 214, 0.45);   /* 青 */
@@ -41,8 +38,6 @@
     --glass-line: rgba(255, 255, 255, 0.08);
     --glass-hover: rgba(255, 255, 255, 0.06);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-
-    --header-glass: rgba(0, 60, 115, 0.5);
 
     --bg-base: #0d1420;
     --blob-1: rgba(0, 110, 200, 0.45);
@@ -84,15 +79,15 @@ body::before {
   max-width: 1200px;
   margin: 16px auto 0;
   padding: 0 16px;
-  color: #fff;
+  color: var(--text);
 }
 
 .site-header .inner {
   padding: 14px 20px 16px;
-  background: var(--header-glass);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
-  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: var(--glass-shadow);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
 }
@@ -125,7 +120,6 @@ body::before {
   margin: 0;
   font-size: 1.4rem;
   letter-spacing: 0.05em;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 .subtitle {
@@ -138,8 +132,9 @@ body::before {
   margin: 0;
   padding: 4px 12px;
   font-size: 0.8rem;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: var(--sub);
+  background: var(--glass-hover);
+  border: 1px solid var(--glass-line);
   border-radius: 999px;
 }
 
@@ -150,10 +145,10 @@ body::before {
   min-width: 0;
   padding: 10px 16px 12px;
   color: #16202c;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: #ffffff;
+  border: 1px solid rgba(22, 32, 44, 0.14);
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 14px rgba(31, 52, 92, 0.10);
 }
 
 /* キャラクターのほうを向いた吹き出しのしっぽ */
@@ -166,8 +161,8 @@ body::before {
   height: 18px;
   margin-top: -9px;
   background: inherit;
-  border-left: 1px solid rgba(255, 255, 255, 0.9);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.9);
+  border-left: 1px solid rgba(22, 32, 44, 0.14);
+  border-bottom: 1px solid rgba(22, 32, 44, 0.14);
   border-radius: 0 0 0 4px;
   transform: rotate(45deg);
   clip-path: polygon(0 0, 0 100%, 100% 100%);  /* キャラ側（左）の三角だけを見せる */
@@ -379,7 +374,6 @@ body::before {
 /* すりガラス効果（backdrop-filter）が使えない古いブラウザでは、少し濃い色にして読みやすくする */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root { --glass: rgba(255, 255, 255, 0.88); --glass-strong: rgba(255, 255, 255, 0.92); }
-  .site-header .inner { background: #005b99; }
 }
 
 /* ---------- スマホ ---------- */
