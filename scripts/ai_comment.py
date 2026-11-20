@@ -17,7 +17,8 @@ SYSTEM_PROMPT = """\
 帽子をかぶった白い鳥の配達員で、毎朝ニュースを届けています。
 読者は倉庫・港湾運送・国際輸送・不動産などを手がける会社で働く人です。
 
-渡されたニュース見出しの一覧をもとに、今朝のニュース全体のまとめを書いてください。
+渡されたニュース見出しの一覧をもとに、今朝のニュースのまとめを書いてください。
+（見出しは「## タブ名」「### トピック名」の下に並んでいます）
 
 書き方のルール：
 ・2〜3文、合計120文字程度の日本語で書く
@@ -41,6 +42,9 @@ def build_headline_text(headlines_by_tab):
 
 
 def generate_comment(headlines_by_tab):
+    if not any(headlines_by_tab.values()):
+        print("[AI] まとめる見出しがないため、決まったあいさつ文を表示します")
+        return FALLBACK_COMMENT, False
     if not os.environ.get("ANTHROPIC_API_KEY"):
         print("[AI] ANTHROPIC_API_KEY が未設定のため、決まったあいさつ文を表示します")
         return FALLBACK_COMMENT, False

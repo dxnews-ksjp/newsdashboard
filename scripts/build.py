@@ -141,11 +141,11 @@ def render_tabs(tabs, cards_by_tab):
     )
 
 
-def render_page(title, subtitle, content, updated_at, comment, by_ai):
+def render_page(title, subtitle, content, updated_at, comment, ai_label_text):
     title = html.escape(title)
     subtitle_html = f'\n        <p class="subtitle">{html.escape(subtitle)}</p>' if subtitle else ""
     comment_html = "<br>".join(html.escape(line) for line in comment.splitlines() if line.strip())
-    ai_label = '<span class="bubble-label">AIによる今朝のまとめ</span>' if by_ai else ""
+    ai_label = f'<span class="bubble-label">{html.escape(ai_label_text)}</span>' if ai_label_text else ""
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -204,7 +204,15 @@ def main():
     if failures == len(config["topics"]):
         sys.exit("すべてのトピックで取得に失敗したため、ページを更新しませんでした。")
 
-    comment, by_ai = generate_comment(headlines_by_tab)
+    # 吹き出しのまとめ：ai_summary_tab で指定したタブの見出しだけをAIに渡す
+    summary_tab = config.get("ai_summary_tab", "")
+    if summary_tab:
+        target = {summary_tab: headlines_by_tab.get(summary_tab, {})}
+        label = f"AIによるまとめ({summary_tab})"
+    else:
+        target = headlines_by_tab
+        label = "AIによるまとめ"
+    comment, by_ai = generate_comment(target)
 
     OUTPUT_DIR.mkdir(exist_ok=True)
     page = render_page(
@@ -213,7 +221,7 @@ def main():
         render_tabs(tabs, cards_by_tab),
         datetime.now(JST),
         comment,
-        by_ai,
+        label if by_ai else "",
     )
     (OUTPUT_DIR / "index.html").write_text(page, encoding="utf-8")
     # デザイン用のファイル（style.css・キャラクター画像など）を公開フォルダへコピー
