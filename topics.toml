@@ -74,6 +74,21 @@ name = "DX推進"
 query = "DX推進"
 
 [[topics]]
+tab = "AI・DX"
+name = "Copilot"
+query = "Copilot"
+
+[[topics]]
+tab = "AI・DX"
+name = "Power Platform"
+query = "\"Power Platform\""
+
+[[topics]]
+tab = "AI・DX"
+name = "AIエージェント"
+query = "AIエージェント"
+
+[[topics]]
 tab = "物流"
 name = "倉庫"
 query = "倉庫"
