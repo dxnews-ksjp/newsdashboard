@@ -157,14 +157,16 @@ def render_page(title, subtitle, content, updated_at, comment, ai_label_text):
 <body>
 <header class="site-header">
   <div class="inner">
-    <div class="brand">
-      <img class="character" src="character.png" alt="" width="286" height="281">
+    <div class="header-top">
       <div class="titles">
         <h1>{title}</h1>{subtitle_html}
       </div>
+      <p class="updated">最終更新：{updated_at.strftime("%Y/%m/%d %H:%M")}</p>
     </div>
-    <p class="updated">最終更新：{updated_at.strftime("%Y/%m/%d %H:%M")}</p>
-    <div class="bubble">{ai_label}<p>{comment_html}</p></div>
+    <div class="brand">
+      <img class="character" src="character.png" alt="" width="286" height="281">
+      <div class="bubble">{ai_label}<p>{comment_html}</p></div>
+    </div>
   </div>
 </header>
 {content}
