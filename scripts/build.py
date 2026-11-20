@@ -1,7 +1,8 @@
 """GoogleニュースのRSSからトピックごとの見出しを集め、public/index.html を作るスクリプト。
 
 使い方:  python scripts/build.py
-Python 3.11 以上の標準ライブラリだけで動きます（追加インストール不要）。
+Python 3.11 以上で動きます。AIのまとめを入れるときだけ anthropic パッケージと
+環境変数 ANTHROPIC_API_KEY が必要です（なくてもページは作れます）。
 """
 
 import html
@@ -14,6 +15,8 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
+
+from ai_comment import generate_comment
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_FILE = ROOT / "topics.toml"
@@ -138,9 +141,11 @@ def render_tabs(tabs, cards_by_tab):
     )
 
 
-def render_page(title, subtitle, content, updated_at):
+def render_page(title, subtitle, content, updated_at, comment, by_ai):
     title = html.escape(title)
     subtitle_html = f'\n        <p class="subtitle">{html.escape(subtitle)}</p>' if subtitle else ""
+    comment_html = "<br>".join(html.escape(line) for line in comment.splitlines() if line.strip())
+    ai_label = '<span class="bubble-label">AIによる今朝のまとめ</span>' if by_ai else ""
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -159,6 +164,7 @@ def render_page(title, subtitle, content, updated_at):
       </div>
     </div>
     <p class="updated">最終更新：{updated_at.strftime("%Y/%m/%d %H:%M")}</p>
+    <div class="bubble">{ai_label}<p>{comment_html}</p></div>
   </div>
 </header>
 {content}
@@ -175,6 +181,7 @@ def main():
     tabs = config.get("tabs", [])
     tab_names = [t["name"] for t in tabs]
     cards_by_tab = {}
+    headlines_by_tab = {}  # AIのまとめ用：{タブ名: {トピック名: [見出し, ...]}}
     failures = 0
     for topic in config["topics"]:
         items, error = [], False
@@ -191,9 +198,13 @@ def main():
             print(f"[注意] {topic['name']}: タブ「{tab}」が見つからないため「{tab_names[0]}」に表示します", file=sys.stderr)
             tab = tab_names[0]
         cards_by_tab.setdefault(tab, []).append(render_card(topic, items, error, show_items))
+        if items:
+            headlines_by_tab.setdefault(tab or "ニュース", {})[topic["name"]] = [i["title"] for i in items]
 
     if failures == len(config["topics"]):
         sys.exit("すべてのトピックで取得に失敗したため、ページを更新しませんでした。")
+
+    comment, by_ai = generate_comment(headlines_by_tab)
 
     OUTPUT_DIR.mkdir(exist_ok=True)
     page = render_page(
@@ -201,6 +212,8 @@ def main():
         config.get("subtitle", ""),
         render_tabs(tabs, cards_by_tab),
         datetime.now(JST),
+        comment,
+        by_ai,
     )
     (OUTPUT_DIR / "index.html").write_text(page, encoding="utf-8")
     # デザイン用のファイル（style.css・キャラクター画像など）を公開フォルダへコピー

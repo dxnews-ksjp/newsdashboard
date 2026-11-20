@@ -137,6 +137,60 @@ body::before {
   border-radius: 999px;
 }
 
+/* ---------- キャラクターの吹き出し ---------- */
+.bubble {
+  position: relative;
+  flex: 1 1 100%;
+  margin: 12px 0 2px;
+  padding: 10px 16px 12px;
+  color: #16202c;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* キャラクターのほうを向いた吹き出しのしっぽ */
+.bubble::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 34px;
+  width: 18px;
+  height: 18px;
+  background: inherit;
+  border-top: 1px solid rgba(255, 255, 255, 0.9);
+  border-left: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 4px 0 0 0;
+  transform: rotate(45deg);
+  clip-path: polygon(0 0, 100% 0, 0 100%);  /* 上半分の三角だけを見せる */
+}
+
+.bubble p {
+  position: relative;
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  font-weight: 500;
+}
+
+.bubble-label {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 4px;
+  padding: 1px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, #6f42c1, #2b9be8);
+  border-radius: 999px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bubble { color: #eaf0f7; background: rgba(20, 28, 42, 0.85); border-color: rgba(255, 255, 255, 0.15); }
+  .bubble::before { border-color: rgba(255, 255, 255, 0.15); }
+}
+
 /* ---------- タブ ---------- */
 .tab-radio {
   position: absolute;
@@ -327,6 +381,10 @@ body::before {
   .site-header .inner { padding: 12px 14px; border-radius: 16px; }
   .site-header h1 { font-size: 1.15rem; }
   .character { width: 64px; }
+  .bubble { margin-top: 10px; padding: 8px 12px 10px; }
+  .updated { order: 3; margin-top: 8px; }  /* スマホでは吹き出しの下に表示 */
+  .bubble::before { left: 24px; }
+  .bubble p { font-size: 0.9rem; }
   .tab-bar { padding: 10px 12px 0; }
   .tab-bar .inner { padding: 6px; gap: 6px; }
   .tab { flex: 1 1 0; padding: 8px 6px; font-size: 1rem; letter-spacing: 0.05em; }
