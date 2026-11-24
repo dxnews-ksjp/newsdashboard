@@ -224,7 +224,8 @@ body::before {
 
 /* タブの色（--tab-color）は topics.toml で指定。
    文字色・ふちの色はその色から自動で作ります。
-   フラットでマットな色に、影だけで立体感（浮いたボタン／押し込まれたボタン）を出しています */
+   マットな質感で、下に向かって少し暗くなるグラデーションで立体感を出しています。
+   選ばれているタブは、内側の影で押し込まれた見た目にします */
 .tab {
   --tab-ink: color-mix(in srgb, var(--tab-color) 30%, #1e2329);
   --tab-edge: color-mix(in srgb, var(--tab-color) 55%, #3a3f46);
@@ -232,7 +233,9 @@ body::before {
   padding: 9px 16px;
   border: 1px solid var(--tab-edge);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--tab-color) 72%, #ffffff);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--tab-color) 80%, #ffffff) 0%,
+    color-mix(in srgb, var(--tab-color) 85%, #2a2f36) 100%);
   color: var(--tab-ink);
   font-size: 1.05rem;
   font-weight: 700;
@@ -240,10 +243,6 @@ body::before {
   letter-spacing: 0.1em;
   cursor: pointer;
   user-select: none;
-  box-shadow:
-    inset 0 -2px 3px rgba(0, 0, 0, 0.10),      /* 下側のほんのりした陰 */
-    0 2px 2px rgba(0, 0, 0, 0.22),             /* 接地している影 */
-    0 4px 8px rgba(0, 0, 0, 0.14);             /* ふんわりした影 */
   transition: transform 0.08s, box-shadow 0.08s, background 0.15s;
 }
 
@@ -251,7 +250,7 @@ body::before {
 /* 押した瞬間は沈み込む */
 .tab:active {
   transform: translateY(1px);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25), 0 1px 1px rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
 /* 選ばれているタブの塗りつぶしは build.py がページ内に書き出します（色は topics.toml） */
