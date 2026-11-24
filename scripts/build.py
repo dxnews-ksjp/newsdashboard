@@ -110,6 +110,14 @@ def render_card(topic, items, error, show_items):
     )
 
 
+# 選ばれているタブの見た目：上側に内側の影を入れて、ボタンが沈み込んだように見せる
+ACTIVE_TAB_STYLE = (
+    "background: linear-gradient(180deg, color-mix(in srgb, var(--tab-color) 80%, #2a2f36) 0%, var(--tab-color) 100%); color: var(--tab-ink); border-color: var(--tab-edge); "
+    "box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.38), inset 0 1px 2px rgba(0, 0, 0, 0.3); "
+    "transform: translateY(1px);"
+)
+
+
 def render_tabs(tabs, cards_by_tab):
     """タブ切り替え部分を作る。JavaScriptを使わず、ラジオボタン＋CSSで切り替える。"""
     if not tabs:  # タブ設定がない場合は従来どおり全カードを1画面に並べる
@@ -128,11 +136,9 @@ def render_tabs(tabs, cards_by_tab):
         body = chr(10).join(cards) or '<p class="message">このタブにはトピックがありません。</p>'
         panels.append(f'<main class="grid panel" id="panel-{tab_id}">\n{body}\n</main>')
         rules.append(f"#{tab_id}:checked ~ #panel-{tab_id} {{ display: grid; }}")
-        rules.append(
-            f"#{tab_id}:checked ~ .tab-bar label[for={tab_id}] "
-            "{ background: var(--tab-color); color: #fff; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25); }"
-        )
-        rules.append(f"#{tab_id}:focus-visible ~ .tab-bar label[for={tab_id}] {{ outline: 3px solid var(--tab-color); outline-offset: 2px; }}")
+        # 選ばれているタブは「押し込まれた」見た目にする（スキューモーフィズム）
+        rules.append(f"#{tab_id}:checked ~ .tab-bar label[for={tab_id}] {{ {ACTIVE_TAB_STYLE} }}")
+        rules.append(f"#{tab_id}:focus-visible ~ .tab-bar label[for={tab_id}] {{ outline: 3px solid var(--tab-edge); outline-offset: 2px; }}")
     return (
         "<style>\n" + "\n".join(rules) + "\n</style>\n"
         + "\n".join(radios) + "\n"
