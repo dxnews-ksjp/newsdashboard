@@ -210,7 +210,7 @@ body::before {
 }
 
 .tab-bar .inner {
-  padding: 8px;
+  padding: 8px 8px 12px;
   display: flex;
   gap: 8px;
   background: var(--glass-strong);
@@ -221,28 +221,34 @@ body::before {
   -webkit-backdrop-filter: var(--blur);
 }
 
+/* タブの色（--tab-color）は topics.toml で指定。
+   文字色と下の影の色は、その色を暗くして自動で作ります */
 .tab {
+  --tab-ink: color-mix(in srgb, var(--tab-color) 35%, #1e2329);
+  --tab-edge: color-mix(in srgb, var(--tab-color) 60%, #2a2f36);
   flex: 0 1 180px;
   padding: 9px 16px;
-  border: 2px solid var(--tab-color);
+  border: 1px solid color-mix(in srgb, var(--tab-edge) 70%, transparent);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.35);
-  color: var(--tab-color);
+  background: color-mix(in srgb, var(--tab-color) 40%, #ffffff);
+  color: color-mix(in srgb, var(--tab-ink) 75%, #ffffff);
   font-size: 1.05rem;
   font-weight: 700;
   text-align: center;
   letter-spacing: 0.1em;
   cursor: pointer;
   user-select: none;
-  transition: background 0.15s, color 0.15s, transform 0.1s, box-shadow 0.15s;
-}
-
-@media (prefers-color-scheme: dark) {
-  .tab { background: rgba(255, 255, 255, 0.06); filter: brightness(1.35); }
+  /* ボタンの下に暗めの影をつけて立体的に */
+  box-shadow: 0 3px 0 var(--tab-edge), 0 5px 10px rgba(0, 0, 0, 0.15);
+  transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
 }
 
 .tab:hover { transform: translateY(-1px); }
-.tab:active { transform: translateY(1px); }
+/* 押した瞬間は影が縮んで、沈み込むように見せる */
+.tab:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--tab-edge), 0 2px 4px rgba(0, 0, 0, 0.15);
+}
 
 /* 選ばれているタブの塗りつぶしは build.py がページ内に書き出します（色は topics.toml） */
 
@@ -387,7 +393,7 @@ body::before {
   .bubble p { font-size: 0.88rem; line-height: 1.6; }
   .updated { padding: 2px 10px; font-size: 0.72rem; }
   .tab-bar { padding: 10px 12px 0; }
-  .tab-bar .inner { padding: 6px; gap: 6px; }
+  .tab-bar .inner { padding: 6px 6px 11px; gap: 6px; }
   .tab { flex: 1 1 0; padding: 8px 6px; font-size: 1rem; letter-spacing: 0.05em; }
   .grid {
     grid-template-columns: 1fr;

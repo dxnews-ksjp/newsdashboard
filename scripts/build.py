@@ -130,9 +130,9 @@ def render_tabs(tabs, cards_by_tab):
         rules.append(f"#{tab_id}:checked ~ #panel-{tab_id} {{ display: grid; }}")
         rules.append(
             f"#{tab_id}:checked ~ .tab-bar label[for={tab_id}] "
-            "{ background: var(--tab-color); color: #fff; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25); }"
+            "{ background: var(--tab-color); color: var(--tab-ink); border-color: var(--tab-edge); box-shadow: 0 5px 0 var(--tab-edge), 0 9px 16px rgba(0, 0, 0, 0.22); transform: translateY(-2px); }"
         )
-        rules.append(f"#{tab_id}:focus-visible ~ .tab-bar label[for={tab_id}] {{ outline: 3px solid var(--tab-color); outline-offset: 2px; }}")
+        rules.append(f"#{tab_id}:focus-visible ~ .tab-bar label[for={tab_id}] {{ outline: 3px solid var(--tab-edge); outline-offset: 2px; }}")
     return (
         "<style>\n" + "\n".join(rules) + "\n</style>\n"
         + "\n".join(radios) + "\n"
