@@ -112,12 +112,9 @@ def render_card(topic, items, error, show_items):
 
 # 選ばれているタブの見た目：上側に内側の影を入れて、ボタンが沈み込んだように見せる
 ACTIVE_TAB_STYLE = (
-    "background: linear-gradient(180deg, color-mix(in srgb, var(--tab-color) 72%, #4a4f57) 0%, "
-    "var(--tab-color) 55%, color-mix(in srgb, var(--tab-color) 80%, #ffffff) 100%); "
-    "color: var(--tab-ink); border-color: var(--tab-edge); "
-    "box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.38), inset 0 1px 2px rgba(0, 0, 0, 0.3), "
-    "0 1px 0 rgba(255, 255, 255, 0.85); "
-    "text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45); transform: translateY(1px);"
+    "background: var(--tab-color); color: var(--tab-ink); border-color: var(--tab-edge); "
+    "box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.38), inset 0 1px 2px rgba(0, 0, 0, 0.3); "
+    "transform: translateY(1px);"
 )
 
 
@@ -141,7 +138,6 @@ def render_tabs(tabs, cards_by_tab):
         rules.append(f"#{tab_id}:checked ~ #panel-{tab_id} {{ display: grid; }}")
         # 選ばれているタブは「押し込まれた」見た目にする（スキューモーフィズム）
         rules.append(f"#{tab_id}:checked ~ .tab-bar label[for={tab_id}] {{ {ACTIVE_TAB_STYLE} }}")
-        rules.append(f"#{tab_id}:checked ~ .tab-bar label[for={tab_id}]::after {{ opacity: 0; }}")
         rules.append(f"#{tab_id}:focus-visible ~ .tab-bar label[for={tab_id}] {{ outline: 3px solid var(--tab-edge); outline-offset: 2px; }}")
     return (
         "<style>\n" + "\n".join(rules) + "\n</style>\n"

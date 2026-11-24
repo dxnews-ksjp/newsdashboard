@@ -217,56 +217,34 @@ body::before {
   background: var(--glass-strong);
   border: 1px solid var(--glass-border);
   border-radius: 999px;
-  box-shadow: var(--glass-shadow), inset 0 2px 5px rgba(0, 0, 0, 0.14), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: var(--glass-shadow), inset 0 2px 5px rgba(0, 0, 0, 0.14);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
 }
 
 /* タブの色（--tab-color）は topics.toml で指定。
    文字色・ふちの色はその色から自動で作ります。
-   スキューモーフィズム：本物のボタンのように、上から光が当たった
-   ぷっくりした質感（グラデーション＋光沢＋影＋浮き出し文字）にしています */
+   フラットでマットな色に、影だけで立体感（浮いたボタン／押し込まれたボタン）を出しています */
 .tab {
   --tab-ink: color-mix(in srgb, var(--tab-color) 30%, #1e2329);
   --tab-edge: color-mix(in srgb, var(--tab-color) 55%, #3a3f46);
-  position: relative;
-  overflow: hidden;
   flex: 0 1 180px;
   padding: 9px 16px;
   border: 1px solid var(--tab-edge);
   border-radius: 999px;
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--tab-color) 35%, #ffffff) 0%,
-    color-mix(in srgb, var(--tab-color) 70%, #ffffff) 55%,
-    var(--tab-color) 100%);
+  background: color-mix(in srgb, var(--tab-color) 72%, #ffffff);
   color: var(--tab-ink);
   font-size: 1.05rem;
   font-weight: 700;
   text-align: center;
   letter-spacing: 0.1em;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);  /* 浮き出し文字 */
   cursor: pointer;
   user-select: none;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),   /* 上のふちの光 */
     inset 0 -2px 3px rgba(0, 0, 0, 0.10),      /* 下側のほんのりした陰 */
     0 2px 2px rgba(0, 0, 0, 0.22),             /* 接地している影 */
     0 4px 8px rgba(0, 0, 0, 0.14);             /* ふんわりした影 */
   transition: transform 0.08s, box-shadow 0.08s, background 0.15s;
-}
-
-/* 上半分の光沢 */
-.tab::after {
-  content: "";
-  position: absolute;
-  top: 1px;
-  left: 8%;
-  right: 8%;
-  height: 48%;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.05));
-  pointer-events: none;
-  transition: opacity 0.15s;
 }
 
 .tab:hover { filter: brightness(1.03); }
