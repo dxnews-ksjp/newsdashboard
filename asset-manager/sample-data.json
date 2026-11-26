@@ -1,0 +1,29 @@
+{
+  "stocks": [
+    {
+      "id": "sample-toyota",
+      "name": "トヨタ自動車",
+      "shares": "100",
+      "cost": "2500",
+      "price": "2900",
+      "dpsI": "45",
+      "monI": "11",
+      "dpsF": "50",
+      "monF": "5",
+      "memo": "ダミーデータ"
+    }
+  ],
+  "banks": [
+    {
+      "id": "sample-smbc",
+      "name": "三井住友銀行",
+      "branch": "",
+      "type": "普通",
+      "balance": "1000",
+      "date": "2026-11-26",
+      "purpose": "",
+      "memo": "ダミーデータ"
+    }
+  ],
+  "updatedAt": null
+}
