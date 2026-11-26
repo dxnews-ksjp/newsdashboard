@@ -96,6 +96,10 @@
       <div class="kpi"><div class="lbl">年間配当（税引前）</div><div class="val" id="s-div">-</div></div>
       <div class="kpi"><div class="lbl">配当利回り（取得額比）</div><div class="val" id="s-yoc">-</div></div>
     </div>
+    <div class="card">
+      <h2>月別の配当予定（税引前）</h2>
+      <div id="s-monthly"></div>
+    </div>
     <p class="note" id="s-updated"></p>
   </section>
 
@@ -181,11 +185,15 @@
       <div class="field"><label>保有数（株）</label><input id="f-shares" type="number" inputmode="decimal" step="any" min="0"></div>
       <div class="field"><label>取得単価（円）</label><input id="f-cost" type="number" inputmode="decimal" step="any" min="0"></div>
     </div>
+    <div class="field"><label>現在の株価（円）</label><input id="f-price" type="number" inputmode="decimal" step="any" min="0"></div>
     <div class="row2">
-      <div class="field"><label>現在の株価（円）</label><input id="f-price" type="number" inputmode="decimal" step="any" min="0"></div>
-      <div class="field"><label>1株あたり年間配当（円）</label><input id="f-dps" type="number" inputmode="decimal" step="any" min="0"></div>
+      <div class="field"><label>中間配当 単価（円/株）</label><input id="f-dpsI" type="number" inputmode="decimal" step="any" min="0"></div>
+      <div class="field"><label>中間配当 月</label><select id="f-monI" class="month-sel"></select></div>
     </div>
-    <div class="field"><label>配当月</label><input id="f-divmonth" placeholder="例：3月・9月"></div>
+    <div class="row2">
+      <div class="field"><label>期末配当 単価（円/株）</label><input id="f-dpsF" type="number" inputmode="decimal" step="any" min="0"></div>
+      <div class="field"><label>期末配当 月</label><select id="f-monF" class="month-sel"></select></div>
+    </div>
     <div class="field"><label>メモ</label><textarea id="f-memo" placeholder="購入理由、優待内容など"></textarea></div>
     <div class="preview" id="stock-preview"></div>
     <div class="actions">
@@ -244,7 +252,22 @@
   function load() {
     try { const raw = localStorage.getItem(KEY); if (raw) db = Object.assign({ stocks: [], banks: [] }, JSON.parse(raw)); }
     catch (e) { alert('データの読み込みに失敗しました'); }
+    migrate();
   }
+  // 旧形式（年間配当1項目）のデータを中間・期末形式へ移行
+  function migrate() {
+    db.stocks.forEach(s => {
+      if ('dps' in s && !('dpsF' in s) && !('dpsI' in s)) {
+        s.dpsF = s.dps; s.dpsI = ''; s.monI = ''; s.monF = '';
+        if (s.divmonth) s.memo = (s.memo ? s.memo + '\n' : '') + '（旧・配当月：' + s.divmonth + '）';
+        delete s.dps; delete s.divmonth;
+      }
+    });
+  }
+  const divCell = (dps, mon) => dps ? num(dps).toLocaleString('ja-JP') + '円' + (mon ? `<br><small style="color:var(--sub)">${esc(mon)}月</small>` : '') : '-';
+  document.querySelectorAll('.month-sel').forEach(sel => {
+    sel.innerHTML = '<option value="">（未選択）</option>' + Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}月</option>`).join('');
+  });
   function save() {
     db.updatedAt = new Date().toISOString();
     try { localStorage.setItem(KEY, JSON.stringify(db)); }
@@ -253,11 +276,11 @@
   }
 
   const calcStock = (s) => {
-    const shares = num(s.shares), cost = num(s.cost), price = num(s.price), dps = num(s.dps);
+    const shares = num(s.shares), cost = num(s.cost), price = num(s.price), dps = num(s.dpsI) + num(s.dpsF);
     const costTotal = shares * cost, value = shares * (price || cost);
     const pl = price ? value - costTotal : 0;
     return { costTotal, value, pl, plr: costTotal && price ? pl / costTotal * 100 : NaN,
-             divTotal: shares * dps, yieldNow: price ? dps / price * 100 : NaN, yoc: cost ? dps / cost * 100 : NaN };
+             divI: shares * num(s.dpsI), divF: shares * num(s.dpsF), divTotal: shares * dps, yieldNow: price ? dps / price * 100 : NaN, yoc: cost ? dps / cost * 100 : NaN };
   };
 
   // ---------- トースト ----------
@@ -280,10 +303,10 @@
     { k: 'value', label: '評価額', get: s => calcStock(s).value, show: s => yen(calcStock(s).value) },
     { k: 'pl', label: '損益', get: s => calcStock(s).pl, show: s => { const c = calcStock(s); return `<span class="${cls(c.pl)}">${signed(c.pl)}</span>`; } },
     { k: 'plr', label: '損益率', get: s => calcStock(s).plr, show: s => { const c = calcStock(s); return `<span class="${cls(c.pl)}">${pct(c.plr)}</span>`; } },
-    { k: 'dps', label: '1株配当', get: s => num(s.dps), show: s => s.dps ? num(s.dps).toLocaleString('ja-JP') : '-' },
+    { k: 'dpsI', label: '中間配当', get: s => num(s.dpsI), show: s => divCell(s.dpsI, s.monI) },
+    { k: 'dpsF', label: '期末配当', get: s => num(s.dpsF), show: s => divCell(s.dpsF, s.monF) },
     { k: 'div', label: '年間配当', get: s => calcStock(s).divTotal, show: s => yen(calcStock(s).divTotal) },
     { k: 'yield', label: '利回り', get: s => calcStock(s).yieldNow, show: s => pctPlain(calcStock(s).yieldNow) },
-    { k: 'divmonth', label: '配当月', l: true, get: s => s.divmonth || '', show: s => esc(s.divmonth || '') },
     { k: 'memo', label: 'メモ', l: true, get: s => s.memo || '', show: s => `<div class="memo">${esc(s.memo || '')}</div>` },
   ];
   const bankCols = [
@@ -318,7 +341,7 @@
 
   function renderStocks() {
     const q = $('stock-q').value.trim().toLowerCase();
-    const rows = sortRows(db.stocks.filter(s => !q || [s.name, s.memo, s.divmonth].join(' ').toLowerCase().includes(q)), stockCols, sortState.stocks);
+    const rows = sortRows(db.stocks.filter(s => !q || [s.name, s.memo].join(' ').toLowerCase().includes(q)), stockCols, sortState.stocks);
     renderHead('stock-head', stockCols, sortState.stocks, 'stocks');
     $('stock-body').innerHTML = rows.length ? rows.map(s =>
       `<tr class="row" data-id="${esc(s.id)}" data-kind="stock">${stockCols.map(c => `<td class="${c.l ? 'l' : ''} ${c.sticky ? 'sticky' : ''}">${c.show(s)}</td>`).join('')}</tr>`).join('')
@@ -355,6 +378,16 @@
     const parts = [['株式', sv, '#2f6fdb'], ['預金', bv, '#2e9e6b']];
     $('s-bar').innerHTML = total > 0 ? parts.map(p => `<div style="width:${p[1] / total * 100}%;background:${p[2]}"></div>`).join('') : '';
     $('s-legend').innerHTML = parts.map(p => `<span><i style="background:${p[2]}"></i>${p[0]} ${total > 0 ? (p[1] / total * 100).toFixed(1) : '0.0'}%</span>`).join('');
+    const months = Array(12).fill(0);
+    db.stocks.forEach(s => { const c = calcStock(s);
+      if (s.monI) months[num(s.monI) - 1] += c.divI;
+      if (s.monF) months[num(s.monF) - 1] += c.divF; });
+    const maxM = Math.max(...months);
+    $('s-monthly').innerHTML = maxM > 0 ? months.map((v, i) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px">
+        <span style="width:34px;color:var(--sub)">${i + 1}月</span>
+        <span style="flex:1;height:10px;background:var(--line);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${v / maxM * 100}%;background:#e0a526"></span></span>
+        <span style="width:84px;text-align:right">${v ? yen(v) : '-'}</span></div>`).join('')
+      : '<div class="note">配当の単価と月を入力すると、ここに月ごとの受取予定が表示されます</div>';
     $('s-updated').textContent = db.updatedAt ? '最終更新：' + new Date(db.updatedAt).toLocaleString('ja-JP') : '';
   }
   function renderAll() { renderSummary(); renderStocks(); renderBanks(); }
@@ -367,15 +400,15 @@
   const closeModals = () => { document.querySelectorAll('.modal').forEach(m => m.classList.remove('open')); document.body.style.overflow = ''; editing = null; };
   document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModals(); }));
 
-  const stockFields = { name: 'f-name', shares: 'f-shares', cost: 'f-cost', price: 'f-price', dps: 'f-dps', divmonth: 'f-divmonth', memo: 'f-memo' };
+  const stockFields = { name: 'f-name', shares: 'f-shares', cost: 'f-cost', price: 'f-price', dpsI: 'f-dpsI', monI: 'f-monI', dpsF: 'f-dpsF', monF: 'f-monF', memo: 'f-memo' };
   const bankFields = { name: 'b-name', branch: 'b-branch', type: 'b-type', balance: 'b-balance', date: 'b-date', purpose: 'b-purpose', memo: 'b-memo' };
 
   function stockPreview() {
     const s = {}; for (const k in stockFields) s[k] = $(stockFields[k]).value;
     const c = calcStock(s);
-    $('stock-preview').innerHTML = `評価額 ${yen(c.value)} ／ 損益 <span class="${cls(c.pl)}">${signed(c.pl)}（${pct(c.plr)}）</span><br>年間配当 ${yen(c.divTotal)} ／ 利回り ${pctPlain(c.yieldNow)}`;
+    $('stock-preview').innerHTML = `評価額 ${yen(c.value)} ／ 損益 <span class="${cls(c.pl)}">${signed(c.pl)}（${pct(c.plr)}）</span><br>中間 ${yen(c.divI)} ＋ 期末 ${yen(c.divF)} ＝ 年間配当 ${yen(c.divTotal)} ／ 利回り ${pctPlain(c.yieldNow)}`;
   }
-  ['f-shares', 'f-cost', 'f-price', 'f-dps'].forEach(id => $(id).addEventListener('input', stockPreview));
+  ['f-shares', 'f-cost', 'f-price', 'f-dpsI', 'f-dpsF'].forEach(id => $(id).addEventListener('input', stockPreview));
 
   function openStock(item) {
     editing = item ? item.id : null;
@@ -425,8 +458,8 @@
     const csvCell = (v) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
     let rows;
     if (kind === 'stocks') {
-      rows = [['銘柄名', '保有数', '取得単価', '株価', '評価額', '損益', '損益率(%)', '1株配当', '年間配当', '利回り(%)', '配当月', 'メモ']];
-      db.stocks.forEach(s => { const c = calcStock(s); rows.push([s.name, s.shares, s.cost, s.price, Math.round(c.value), Math.round(c.pl), isFinite(c.plr) ? c.plr.toFixed(2) : '', s.dps, Math.round(c.divTotal), isFinite(c.yieldNow) ? c.yieldNow.toFixed(2) : '', s.divmonth, s.memo]); });
+      rows = [['銘柄名', '保有数', '取得単価', '株価', '評価額', '損益', '損益率(%)', '中間配当単価', '中間配当月', '期末配当単価', '期末配当月', '年間配当', '利回り(%)', 'メモ']];
+      db.stocks.forEach(s => { const c = calcStock(s); rows.push([s.name, s.shares, s.cost, s.price, Math.round(c.value), Math.round(c.pl), isFinite(c.plr) ? c.plr.toFixed(2) : '', s.dpsI, s.monI ? s.monI + '月' : '', s.dpsF, s.monF ? s.monF + '月' : '', Math.round(c.divTotal), isFinite(c.yieldNow) ? c.yieldNow.toFixed(2) : '', s.memo]); });
     } else {
       rows = [['銀行名', '支店名', '種別', '残高', '確認日', '用途', 'メモ']];
       db.banks.forEach(b => rows.push([b.name, b.branch, b.type, b.balance, b.date, b.purpose, b.memo]));
@@ -444,7 +477,7 @@
         if (!Array.isArray(d.stocks) || !Array.isArray(d.banks)) throw new Error('形式が違います');
         if (!confirm(`株式 ${d.stocks.length}件・銀行 ${d.banks.length}件で、現在のデータを置き換えます。よろしいですか？`)) return;
         d.stocks.forEach(x => x.id = x.id || uid()); d.banks.forEach(x => x.id = x.id || uid());
-        db = d; save(); toast('復元しました');
+        db = d; migrate(); save(); toast('復元しました');
       } catch (err) { alert('読み込めませんでした：' + err.message); }
     };
     r.readAsText(f); e.target.value = '';
