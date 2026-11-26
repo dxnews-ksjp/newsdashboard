@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- 外部通信を完全に禁止（画像・スクリプト・通信すべて外部不可） -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#1f3a5f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>マイ資産ノート</title>
+<style>
+  :root {
+    --bg: #f4f6f9; --card: #fff; --text: #1d2430; --sub: #6b7685; --line: #e1e5ea;
+    --main: #1f3a5f; --accent: #2f6fdb; --plus: #c62828; --minus: #1565c0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12161c; --card:#1b2129; --text:#e6e9ee; --sub:#9aa4b2; --line:#2c343f; --main:#0f1f33; --accent:#5b93f0; --plus:#ef6b6b; --minus:#6aa5f5; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; background:var(--bg); color:var(--text); font-size:15px; padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+  header { background:var(--main); color:#fff; padding: calc(12px + env(safe-area-inset-top)) 16px 12px; position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; }
+  header h1 { font-size:17px; margin:0; }
+  header .lock { font-size:11px; opacity:.8; }
+  main { padding: 12px; max-width: 1100px; margin: 0 auto; }
+  nav { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--card); border-top:1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index:10; }
+  nav button { flex:1; border:none; background:none; padding:10px 0 8px; color:var(--sub); font-size:11px; }
+  nav button .ic { display:block; font-size:20px; margin-bottom:2px; }
+  nav button.active { color:var(--accent); font-weight:bold; }
+  .card { background:var(--card); border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .card h2 { font-size:14px; margin:0 0 10px; color:var(--sub); font-weight:600; }
+  .big { font-size:26px; font-weight:bold; }
+  .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  .kpi .lbl { font-size:12px; color:var(--sub); }
+  .kpi .val { font-size:18px; font-weight:bold; margin-top:2px; }
+  .plus { color:var(--plus); } .minus { color:var(--minus); }
+  .toolbar { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .toolbar input[type=search] { flex:1; min-width:140px; }
+  button.btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:10px 14px; font-size:14px; font-weight:600; }
+  button.btn.sub { background:var(--card); color:var(--text); border:1px solid var(--line); }
+  button.btn.danger { background:#d33; }
+  input, select, textarea { font-size:16px; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--text); width:100%; font-family:inherit; }
+  textarea { min-height:70px; }
+  .tablewrap { overflow-x:auto; -webkit-overflow-scrolling:touch; background:var(--card); border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  table { border-collapse:collapse; width:100%; white-space:nowrap; font-size:13px; }
+  th, td { padding:9px 10px; border-bottom:1px solid var(--line); text-align:right; }
+  th { background:var(--bg); color:var(--sub); font-weight:600; position:sticky; top:0; cursor:pointer; user-select:none; }
+  th.l, td.l { text-align:left; }
+  td.sticky, th.sticky { position:sticky; left:0; background:var(--card); z-index:1; }
+  th.sticky { background:var(--bg); z-index:2; }
+  tr.row:active td { background: rgba(47,111,219,.08); }
+  tfoot td { font-weight:bold; background:var(--bg); }
+  .memo { max-width:180px; overflow:hidden; text-overflow:ellipsis; color:var(--sub); }
+  .empty { text-align:center; color:var(--sub); padding:30px 10px; }
+  .bar { display:flex; height:22px; border-radius:6px; overflow:hidden; margin:8px 0; background:var(--line); }
+  .bar div { height:100%; }
+  .legend { display:flex; flex-wrap:wrap; gap:10px; font-size:12px; color:var(--sub); }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:middle; }
+  /* モーダル */
+  .modal { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-end; justify-content:center; z-index:50; }
+  .modal.open { display:flex; }
+  .sheet { background:var(--card); width:100%; max-width:560px; max-height:92vh; overflow-y:auto; border-radius:16px 16px 0 0; padding:16px 16px calc(16px + env(safe-area-inset-bottom)); }
+  .sheet h3 { margin:0 0 12px; font-size:17px; }
+  .field { margin-bottom:10px; }
+  .field label { display:block; font-size:12px; color:var(--sub); margin-bottom:4px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .actions { display:flex; gap:8px; margin-top:14px; }
+  .actions .btn { flex:1; }
+  .preview { font-size:13px; color:var(--sub); background:var(--bg); border-radius:8px; padding:8px 10px; margin-top:4px; }
+  .note { font-size:12px; color:var(--sub); line-height:1.6; }
+  .toast { position:fixed; left:50%; bottom:90px; transform:translateX(-50%); background:#333; color:#fff; padding:10px 16px; border-radius:20px; font-size:13px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:60; }
+  .toast.show { opacity:.92; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📒 マイ資産ノート</h1>
+  <span class="lock">🔒 オフライン専用</span>
+</header>
+
+<main>
+  <!-- サマリー -->
+  <section id="tab-summary">
+    <div class="card">
+      <h2>総資産</h2>
+      <div class="big" id="s-total">¥0</div>
+      <div class="bar" id="s-bar"></div>
+      <div class="legend" id="s-legend"></div>
+    </div>
+    <div class="card grid2">
+      <div class="kpi"><div class="lbl">株式 評価額</div><div class="val" id="s-stock">-</div></div>
+      <div class="kpi"><div class="lbl">預金 合計</div><div class="val" id="s-bank">-</div></div>
+      <div class="kpi"><div class="lbl">含み損益</div><div class="val" id="s-pl">-</div></div>
+      <div class="kpi"><div class="lbl">損益率</div><div class="val" id="s-plr">-</div></div>
+      <div class="kpi"><div class="lbl">年間配当（税引前）</div><div class="val" id="s-div">-</div></div>
+      <div class="kpi"><div class="lbl">配当利回り（取得額比）</div><div class="val" id="s-yoc">-</div></div>
+    </div>
+    <div class="card">
+      <h2>口座区分別の評価額</h2>
+      <div id="s-byacct"></div>
+    </div>
+    <p class="note" id="s-updated"></p>
+  </section>
+
+  <!-- 株式 -->
+  <section id="tab-stocks" class="hidden">
+    <div class="toolbar">
+      <input type="search" id="stock-q" placeholder="銘柄・コード・メモで検索">
+      <button class="btn" data-action="add-stock">＋ 追加</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr id="stock-head"></tr></thead>
+        <tbody id="stock-body"></tbody>
+        <tfoot id="stock-foot"></tfoot>
+      </table>
+    </div>
+    <p class="note">行をタップすると編集できます。見出しをタップすると並べ替えできます。表は横にスクロールできます。</p>
+  </section>
+
+  <!-- 銀行 -->
+  <section id="tab-banks" class="hidden">
+    <div class="toolbar">
+      <input type="search" id="bank-q" placeholder="銀行名・メモで検索">
+      <button class="btn" data-action="add-bank">＋ 追加</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr id="bank-head"></tr></thead>
+        <tbody id="bank-body"></tbody>
+        <tfoot id="bank-foot"></tfoot>
+      </table>
+    </div>
+    <p class="note">行をタップすると編集できます。</p>
+  </section>
+
+  <!-- 設定 -->
+  <section id="tab-settings" class="hidden">
+    <div class="card">
+      <h2>バックアップ</h2>
+      <p class="note">データはこの端末のブラウザ内にだけ保存されています。ブラウザのデータ削除や機種変更で消えるため、定期的にバックアップファイルを保存してください。</p>
+      <div class="toolbar">
+        <button class="btn" data-action="export-json">バックアップを保存</button>
+        <button class="btn sub" data-action="import-json">バックアップから復元</button>
+      </div>
+      <input type="file" id="import-file" accept=".json,application/json" class="hidden">
+    </div>
+    <div class="card">
+      <h2>エクセル用に書き出し（CSV）</h2>
+      <div class="toolbar">
+        <button class="btn sub" data-action="export-csv-stocks">株式をCSV保存</button>
+        <button class="btn sub" data-action="export-csv-banks">銀行をCSV保存</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>安全性について</h2>
+      <p class="note">
+        ・このアプリはHTMLファイル1つで動き、外部サーバーへの通信は一切行いません。<br>
+        ・ページ内のセキュリティ設定（CSP）で、外部への通信・外部ファイルの読み込みをブラウザ側で禁止しています。<br>
+        ・入力データはこの端末のブラウザ（localStorage）にのみ保存されます。<br>
+        ・株価は自動取得しません（通信が必要になるため）。手入力で更新してください。
+      </p>
+    </div>
+    <div class="card">
+      <h2>データの全削除</h2>
+      <button class="btn danger" data-action="wipe">すべてのデータを削除</button>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-tab="summary" class="active"><span class="ic">📊</span>サマリー</button>
+  <button data-tab="stocks"><span class="ic">📈</span>株式</button>
+  <button data-tab="banks"><span class="ic">🏦</span>銀行</button>
+  <button data-tab="settings"><span class="ic">⚙️</span>設定</button>
+</nav>
+
+<!-- 株式 入力 -->
+<div class="modal" id="stock-modal">
+  <div class="sheet">
+    <h3 id="stock-title">銘柄を追加</h3>
+    <div class="row2">
+      <div class="field"><label>証券コード</label><input id="f-code" inputmode="text" placeholder="7203"></div>
+      <div class="field"><label>口座区分</label>
+        <select id="f-acct">
+          <option>特定</option><option>一般</option><option>NISA成長</option><option>NISAつみたて</option><option>旧NISA</option><option>iDeCo</option><option>その他</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>銘柄名 *</label><input id="f-name" placeholder="例：トヨタ自動車"></div>
+    <div class="row2">
+      <div class="field"><label>保有数（株）</label><input id="f-shares" type="number" inputmode="decimal" step="any" min="0"></div>
+      <div class="field"><label>取得単価（円）</label><input id="f-cost" type="number" inputmode="decimal" step="any" min="0"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>現在の株価（円）</label><input id="f-price" type="number" inputmode="decimal" step="any" min="0"></div>
+      <div class="field"><label>1株あたり年間配当（円）</label><input id="f-dps" type="number" inputmode="decimal" step="any" min="0"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>証券会社</label><input id="f-broker" placeholder="例：〇〇証券"></div>
+      <div class="field"><label>配当月</label><input id="f-divmonth" placeholder="例：3月・9月"></div>
+    </div>
+    <div class="field"><label>メモ</label><textarea id="f-memo" placeholder="購入理由、優待内容など"></textarea></div>
+    <div class="preview" id="stock-preview"></div>
+    <div class="actions">
+      <button class="btn danger hidden" id="stock-del">削除</button>
+      <button class="btn sub" data-action="close-modal">キャンセル</button>
+      <button class="btn" id="stock-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 銀行 入力 -->
+<div class="modal" id="bank-modal">
+  <div class="sheet">
+    <h3 id="bank-title">口座を追加</h3>
+    <div class="field"><label>銀行名 *</label><input id="b-name" placeholder="例：〇〇銀行"></div>
+    <div class="row2">
+      <div class="field"><label>支店名</label><input id="b-branch"></div>
+      <div class="field"><label>種別</label>
+        <select id="b-type"><option>普通</option><option>定期</option><option>当座</option><option>貯蓄</option><option>外貨</option><option>その他</option></select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>残高（円）</label><input id="b-balance" type="number" inputmode="decimal" step="any"></div>
+      <div class="field"><label>確認日</label><input id="b-date" type="date"></div>
+    </div>
+    <div class="field"><label>用途</label><input id="b-purpose" placeholder="例：生活費、給与受取"></div>
+    <div class="field"><label>メモ</label><textarea id="b-memo"></textarea></div>
+    <p class="note">※口座番号・暗証番号など、万一の際に悪用される情報の入力は避けることをおすすめします。</p>
+    <div class="actions">
+      <button class="btn danger hidden" id="bank-del">削除</button>
+      <button class="btn sub" data-action="close-modal">キャンセル</button>
+      <button class="btn" id="bank-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  'use strict';
+  const KEY = 'my-asset-note-v1';
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const num = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
+  const yen = (n) => '¥' + Math.round(n).toLocaleString('ja-JP');
+  const signed = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + '¥' + Math.abs(Math.round(n)).toLocaleString('ja-JP');
+  const pct = (n) => isFinite(n) ? (n > 0 ? '+' : '') + n.toFixed(2) + '%' : '-';
+  const pctPlain = (n) => isFinite(n) ? n.toFixed(2) + '%' : '-';
+  const cls = (n) => n > 0 ? 'plus' : n < 0 ? 'minus' : '';
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const today = () => new Date().toISOString().slice(0, 10);
+
+  // ---------- データ ----------
+  let db = { stocks: [], banks: [], updatedAt: null };
+  function load() {
+    try { const raw = localStorage.getItem(KEY); if (raw) db = Object.assign({ stocks: [], banks: [] }, JSON.parse(raw)); }
+    catch (e) { alert('データの読み込みに失敗しました'); }
+  }
+  function save() {
+    db.updatedAt = new Date().toISOString();
+    try { localStorage.setItem(KEY, JSON.stringify(db)); }
+    catch (e) { alert('保存に失敗しました（ブラウザの保存領域を確認してください）'); }
+    renderAll();
+  }
+
+  const calcStock = (s) => {
+    const shares = num(s.shares), cost = num(s.cost), price = num(s.price), dps = num(s.dps);
+    const costTotal = shares * cost, value = shares * (price || cost);
+    const pl = price ? value - costTotal : 0;
+    return { costTotal, value, pl, plr: costTotal && price ? pl / costTotal * 100 : NaN,
+             divTotal: shares * dps, yieldNow: price ? dps / price * 100 : NaN, yoc: cost ? dps / cost * 100 : NaN };
+  };
+
+  // ---------- トースト ----------
+  let tt;
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 1800); }
+
+  // ---------- タブ ----------
+  document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach(x => x.classList.toggle('active', x === b));
+    ['summary', 'stocks', 'banks', 'settings'].forEach(t => $('tab-' + t).classList.toggle('hidden', t !== b.dataset.tab));
+    window.scrollTo(0, 0);
+  }));
+
+  // ---------- 株式テーブル ----------
+  const stockCols = [
+    { k: 'name', label: '銘柄', l: true, sticky: true, get: s => s.name, show: s => `${esc(s.name)}${s.code ? `<br><small style="color:var(--sub)">${esc(s.code)}</small>` : ''}` },
+    { k: 'acct', label: '口座', l: true, get: s => s.acct || '', show: s => esc(s.acct || '') },
+    { k: 'shares', label: '保有数', get: s => num(s.shares), show: s => num(s.shares).toLocaleString('ja-JP') },
+    { k: 'cost', label: '取得単価', get: s => num(s.cost), show: s => s.cost !== '' && s.cost != null ? num(s.cost).toLocaleString('ja-JP') : '-' },
+    { k: 'price', label: '株価', get: s => num(s.price), show: s => s.price ? num(s.price).toLocaleString('ja-JP') : '-' },
+    { k: 'value', label: '評価額', get: s => calcStock(s).value, show: s => yen(calcStock(s).value) },
+    { k: 'pl', label: '損益', get: s => calcStock(s).pl, show: s => { const c = calcStock(s); return `<span class="${cls(c.pl)}">${signed(c.pl)}</span>`; } },
+    { k: 'plr', label: '損益率', get: s => calcStock(s).plr, show: s => { const c = calcStock(s); return `<span class="${cls(c.pl)}">${pct(c.plr)}</span>`; } },
+    { k: 'dps', label: '1株配当', get: s => num(s.dps), show: s => s.dps ? num(s.dps).toLocaleString('ja-JP') : '-' },
+    { k: 'div', label: '年間配当', get: s => calcStock(s).divTotal, show: s => yen(calcStock(s).divTotal) },
+    { k: 'yield', label: '利回り', get: s => calcStock(s).yieldNow, show: s => pctPlain(calcStock(s).yieldNow) },
+    { k: 'divmonth', label: '配当月', l: true, get: s => s.divmonth || '', show: s => esc(s.divmonth || '') },
+    { k: 'broker', label: '証券会社', l: true, get: s => s.broker || '', show: s => esc(s.broker || '') },
+    { k: 'memo', label: 'メモ', l: true, get: s => s.memo || '', show: s => `<div class="memo">${esc(s.memo || '')}</div>` },
+  ];
+  const bankCols = [
+    { k: 'name', label: '銀行', l: true, sticky: true, get: b => b.name, show: b => `${esc(b.name)}${b.branch ? `<br><small style="color:var(--sub)">${esc(b.branch)}</small>` : ''}` },
+    { k: 'type', label: '種別', l: true, get: b => b.type || '', show: b => esc(b.type || '') },
+    { k: 'balance', label: '残高', get: b => num(b.balance), show: b => yen(num(b.balance)) },
+    { k: 'date', label: '確認日', l: true, get: b => b.date || '', show: b => esc(b.date || '') },
+    { k: 'purpose', label: '用途', l: true, get: b => b.purpose || '', show: b => esc(b.purpose || '') },
+    { k: 'memo', label: 'メモ', l: true, get: b => b.memo || '', show: b => `<div class="memo">${esc(b.memo || '')}</div>` },
+  ];
+  const sortState = { stocks: { k: 'value', dir: -1 }, banks: { k: 'balance', dir: -1 } };
+
+  function sortRows(rows, cols, st) {
+    const col = cols.find(c => c.k === st.k); if (!col) return rows;
+    return rows.slice().sort((a, b) => {
+      let x = col.get(a), y = col.get(b);
+      if (typeof x === 'number' && isNaN(x)) x = -Infinity;
+      if (typeof y === 'number' && isNaN(y)) y = -Infinity;
+      return (typeof x === 'string' ? x.localeCompare(y, 'ja') : x - y) * st.dir;
+    });
+  }
+  function renderHead(elId, cols, st, kind) {
+    $(elId).innerHTML = cols.map(c =>
+      `<th class="${c.l ? 'l' : ''} ${c.sticky ? 'sticky' : ''}" data-sort="${kind}:${c.k}">${c.label}${st.k === c.k ? (st.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('');
+  }
+  document.addEventListener('click', (e) => {
+    const th = e.target.closest('th[data-sort]'); if (!th) return;
+    const [kind, k] = th.dataset.sort.split(':'); const st = sortState[kind];
+    if (st.k === k) st.dir *= -1; else { st.k = k; st.dir = -1; }
+    kind === 'stocks' ? renderStocks() : renderBanks();
+  });
+
+  function renderStocks() {
+    const q = $('stock-q').value.trim().toLowerCase();
+    const rows = sortRows(db.stocks.filter(s => !q || [s.name, s.code, s.memo, s.broker, s.acct].join(' ').toLowerCase().includes(q)), stockCols, sortState.stocks);
+    renderHead('stock-head', stockCols, sortState.stocks, 'stocks');
+    $('stock-body').innerHTML = rows.length ? rows.map(s =>
+      `<tr class="row" data-id="${esc(s.id)}" data-kind="stock">${stockCols.map(c => `<td class="${c.l ? 'l' : ''} ${c.sticky ? 'sticky' : ''}">${c.show(s)}</td>`).join('')}</tr>`).join('')
+      : `<tr><td colspan="${stockCols.length}" class="empty">${db.stocks.length ? '該当する銘柄がありません' : '「＋ 追加」から銘柄を登録しましょう'}</td></tr>`;
+    if (rows.length) {
+      const t = rows.reduce((a, s) => { const c = calcStock(s); a.v += c.value; a.c += c.costTotal; a.pl += c.pl; a.d += c.divTotal; return a; }, { v: 0, c: 0, pl: 0, d: 0 });
+      $('stock-foot').innerHTML = `<tr>${stockCols.map(c => {
+        const m = { name: '合計', value: yen(t.v), pl: `<span class="${cls(t.pl)}">${signed(t.pl)}</span>`, plr: `<span class="${cls(t.pl)}">${pct(t.c ? t.pl / t.c * 100 : NaN)}</span>`, div: yen(t.d) };
+        return `<td class="${c.l ? 'l' : ''} ${c.sticky ? 'sticky' : ''}">${m[c.k] || ''}</td>`; }).join('')}</tr>`;
+    } else $('stock-foot').innerHTML = '';
+  }
+  function renderBanks() {
+    const q = $('bank-q').value.trim().toLowerCase();
+    const rows = sortRows(db.banks.filter(b => !q || [b.name, b.branch, b.memo, b.purpose, b.type].join(' ').toLowerCase().includes(q)), bankCols, sortState.banks);
+    renderHead('bank-head', bankCols, sortState.banks, 'banks');
+    $('bank-body').innerHTML = rows.length ? rows.map(b =>
+      `<tr class="row" data-id="${esc(b.id)}" data-kind="bank">${bankCols.map(c => `<td class="${c.l ? 'l' : ''} ${c.sticky ? 'sticky' : ''}">${c.show(b)}</td>`).join('')}</tr>`).join('')
+      : `<tr><td colspan="${bankCols.length}" class="empty">${db.banks.length ? '該当する口座がありません' : '「＋ 追加」から口座を登録しましょう'}</td></tr>`;
+    $('bank-foot').innerHTML = rows.length ? `<tr>${bankCols.map(c => `<td class="${c.l ? 'l' : ''} ${c.sticky ? 'sticky' : ''}">${c.k === 'name' ? '合計' : c.k === 'balance' ? yen(rows.reduce((a, b) => a + num(b.balance), 0)) : ''}</td>`).join('')}</tr>` : '';
+  }
+
+  function renderSummary() {
+    let sv = 0, sc = 0, pl = 0, dv = 0; const byAcct = {};
+    db.stocks.forEach(s => { const c = calcStock(s); sv += c.value; sc += c.costTotal; pl += c.pl; dv += c.divTotal; const a = s.acct || 'その他'; byAcct[a] = (byAcct[a] || 0) + c.value; });
+    const bv = db.banks.reduce((a, b) => a + num(b.balance), 0);
+    const total = sv + bv;
+    $('s-total').textContent = yen(total);
+    $('s-stock').textContent = yen(sv);
+    $('s-bank').textContent = yen(bv);
+    $('s-pl').innerHTML = `<span class="${cls(pl)}">${signed(pl)}</span>`;
+    $('s-plr').innerHTML = `<span class="${cls(pl)}">${pct(sc ? pl / sc * 100 : NaN)}</span>`;
+    $('s-div').textContent = yen(dv);
+    $('s-yoc').textContent = pctPlain(sc ? dv / sc * 100 : NaN);
+    const parts = [['株式', sv, '#2f6fdb'], ['預金', bv, '#2e9e6b']];
+    $('s-bar').innerHTML = total > 0 ? parts.map(p => `<div style="width:${p[1] / total * 100}%;background:${p[2]}"></div>`).join('') : '';
+    $('s-legend').innerHTML = parts.map(p => `<span><i style="background:${p[2]}"></i>${p[0]} ${total > 0 ? (p[1] / total * 100).toFixed(1) : '0.0'}%</span>`).join('');
+    const ent = Object.entries(byAcct).sort((a, b) => b[1] - a[1]);
+    $('s-byacct').innerHTML = ent.length ? ent.map(([k, v]) =>
+      `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>${esc(k)}</span><span>${yen(v)} <small style="color:var(--sub)">${sv ? (v / sv * 100).toFixed(1) : 0}%</small></span></div>`).join('')
+      : '<div class="note">まだ株式が登録されていません</div>';
+    $('s-updated').textContent = db.updatedAt ? '最終更新：' + new Date(db.updatedAt).toLocaleString('ja-JP') : '';
+  }
+  function renderAll() { renderSummary(); renderStocks(); renderBanks(); }
+  $('stock-q').addEventListener('input', renderStocks);
+  $('bank-q').addEventListener('input', renderBanks);
+
+  // ---------- モーダル ----------
+  let editing = null;
+  const openModal = (id) => { $(id).classList.add('open'); document.body.style.overflow = 'hidden'; };
+  const closeModals = () => { document.querySelectorAll('.modal').forEach(m => m.classList.remove('open')); document.body.style.overflow = ''; editing = null; };
+  document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModals(); }));
+
+  const stockFields = { code: 'f-code', acct: 'f-acct', name: 'f-name', shares: 'f-shares', cost: 'f-cost', price: 'f-price', dps: 'f-dps', broker: 'f-broker', divmonth: 'f-divmonth', memo: 'f-memo' };
+  const bankFields = { name: 'b-name', branch: 'b-branch', type: 'b-type', balance: 'b-balance', date: 'b-date', purpose: 'b-purpose', memo: 'b-memo' };
+
+  function stockPreview() {
+    const s = {}; for (const k in stockFields) s[k] = $(stockFields[k]).value;
+    const c = calcStock(s);
+    $('stock-preview').innerHTML = `評価額 ${yen(c.value)} ／ 損益 <span class="${cls(c.pl)}">${signed(c.pl)}（${pct(c.plr)}）</span><br>年間配当 ${yen(c.divTotal)} ／ 利回り ${pctPlain(c.yieldNow)}`;
+  }
+  ['f-shares', 'f-cost', 'f-price', 'f-dps'].forEach(id => $(id).addEventListener('input', stockPreview));
+
+  function openStock(item) {
+    editing = item ? item.id : null;
+    $('stock-title').textContent = item ? '銘柄を編集' : '銘柄を追加';
+    for (const k in stockFields) $(stockFields[k]).value = item ? (item[k] ?? '') : (k === 'acct' ? '特定' : '');
+    $('stock-del').classList.toggle('hidden', !item);
+    stockPreview(); openModal('stock-modal');
+  }
+  function openBank(item) {
+    editing = item ? item.id : null;
+    $('bank-title').textContent = item ? '口座を編集' : '口座を追加';
+    for (const k in bankFields) $(bankFields[k]).value = item ? (item[k] ?? '') : (k === 'type' ? '普通' : k === 'date' ? today() : '');
+    $('bank-del').classList.toggle('hidden', !item);
+    openModal('bank-modal');
+  }
+  function upsert(list, fields, nameId) {
+    const o = {}; for (const k in fields) o[k] = $(fields[k]).value.trim();
+    if (!o.name) { alert('名前を入力してください'); $(nameId).focus(); return false; }
+    if (editing) { const i = list.findIndex(x => x.id === editing); if (i >= 0) list[i] = Object.assign(list[i], o); }
+    else list.push(Object.assign({ id: uid() }, o));
+    return true;
+  }
+  $('stock-save').addEventListener('click', () => { if (upsert(db.stocks, stockFields, 'f-name')) { closeModals(); save(); toast('保存しました'); } });
+  $('bank-save').addEventListener('click', () => { if (upsert(db.banks, bankFields, 'b-name')) { closeModals(); save(); toast('保存しました'); } });
+  $('stock-del').addEventListener('click', () => { if (confirm('この銘柄を削除しますか？')) { db.stocks = db.stocks.filter(x => x.id !== editing); closeModals(); save(); toast('削除しました'); } });
+  $('bank-del').addEventListener('click', () => { if (confirm('この口座を削除しますか？')) { db.banks = db.banks.filter(x => x.id !== editing); closeModals(); save(); toast('削除しました'); } });
+
+  document.addEventListener('click', (e) => {
+    const tr = e.target.closest('tr.row');
+    if (tr) { const list = tr.dataset.kind === 'stock' ? db.stocks : db.banks; const it = list.find(x => x.id === tr.dataset.id); if (it) (tr.dataset.kind === 'stock' ? openStock : openBank)(it); return; }
+    const a = e.target.closest('[data-action]'); if (!a) return;
+    ({ 'add-stock': () => openStock(null), 'add-bank': () => openBank(null), 'close-modal': closeModals,
+       'export-json': exportJson, 'import-json': () => $('import-file').click(),
+       'export-csv-stocks': () => exportCsv('stocks'), 'export-csv-banks': () => exportCsv('banks'), 'wipe': wipe })[a.dataset.action]?.();
+  });
+
+  // ---------- 書き出し・読み込み（すべて端末内で完結） ----------
+  function download(name, text, type) {
+    const blob = new Blob([text], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  const stamp = () => new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+  function exportJson() { download(`asset-backup-${stamp()}.json`, JSON.stringify(db, null, 2), 'application/json'); toast('バックアップを書き出しました'); }
+  function exportCsv(kind) {
+    const csvCell = (v) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    let rows;
+    if (kind === 'stocks') {
+      rows = [['証券コード', '銘柄名', '口座区分', '保有数', '取得単価', '株価', '評価額', '損益', '損益率(%)', '1株配当', '年間配当', '利回り(%)', '配当月', '証券会社', 'メモ']];
+      db.stocks.forEach(s => { const c = calcStock(s); rows.push([s.code, s.name, s.acct, s.shares, s.cost, s.price, Math.round(c.value), Math.round(c.pl), isFinite(c.plr) ? c.plr.toFixed(2) : '', s.dps, Math.round(c.divTotal), isFinite(c.yieldNow) ? c.yieldNow.toFixed(2) : '', s.divmonth, s.broker, s.memo]); });
+    } else {
+      rows = [['銀行名', '支店名', '種別', '残高', '確認日', '用途', 'メモ']];
+      db.banks.forEach(b => rows.push([b.name, b.branch, b.type, b.balance, b.date, b.purpose, b.memo]));
+    }
+    // 先頭のBOMでエクセルの文字化けを防止
+    download(`${kind === 'stocks' ? '株式' : '銀行'}-${stamp()}.csv`, '﻿' + rows.map(r => r.map(csvCell).join(',')).join('\r\n'), 'text/csv');
+    toast('CSVを書き出しました');
+  }
+  $('import-file').addEventListener('change', (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const d = JSON.parse(r.result);
+        if (!Array.isArray(d.stocks) || !Array.isArray(d.banks)) throw new Error('形式が違います');
+        if (!confirm(`株式 ${d.stocks.length}件・銀行 ${d.banks.length}件で、現在のデータを置き換えます。よろしいですか？`)) return;
+        d.stocks.forEach(x => x.id = x.id || uid()); d.banks.forEach(x => x.id = x.id || uid());
+        db = d; save(); toast('復元しました');
+      } catch (err) { alert('読み込めませんでした：' + err.message); }
+    };
+    r.readAsText(f); e.target.value = '';
+  });
+  function wipe() {
+    if (!confirm('すべてのデータを削除します。元に戻せません。よろしいですか？')) return;
+    if (!confirm('本当に削除しますか？（バックアップは保存済みですか？）')) return;
+    db = { stocks: [], banks: [], updatedAt: null }; localStorage.removeItem(KEY); renderAll(); toast('削除しました');
+  }
+
+  load(); renderAll();
+})();
+</script>
+</body>
+</html>
