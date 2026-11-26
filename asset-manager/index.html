@@ -96,17 +96,13 @@
       <div class="kpi"><div class="lbl">年間配当（税引前）</div><div class="val" id="s-div">-</div></div>
       <div class="kpi"><div class="lbl">配当利回り（取得額比）</div><div class="val" id="s-yoc">-</div></div>
     </div>
-    <div class="card">
-      <h2>口座区分別の評価額</h2>
-      <div id="s-byacct"></div>
-    </div>
     <p class="note" id="s-updated"></p>
   </section>
 
   <!-- 株式 -->
   <section id="tab-stocks" class="hidden">
     <div class="toolbar">
-      <input type="search" id="stock-q" placeholder="銘柄・コード・メモで検索">
+      <input type="search" id="stock-q" placeholder="銘柄・メモで検索">
       <button class="btn" data-action="add-stock">＋ 追加</button>
     </div>
     <div class="tablewrap">
@@ -180,14 +176,6 @@
 <div class="modal" id="stock-modal">
   <div class="sheet">
     <h3 id="stock-title">銘柄を追加</h3>
-    <div class="row2">
-      <div class="field"><label>証券コード</label><input id="f-code" inputmode="text" placeholder="7203"></div>
-      <div class="field"><label>口座区分</label>
-        <select id="f-acct">
-          <option>特定</option><option>一般</option><option>NISA成長</option><option>NISAつみたて</option><option>旧NISA</option><option>iDeCo</option><option>その他</option>
-        </select>
-      </div>
-    </div>
     <div class="field"><label>銘柄名 *</label><input id="f-name" placeholder="例：トヨタ自動車"></div>
     <div class="row2">
       <div class="field"><label>保有数（株）</label><input id="f-shares" type="number" inputmode="decimal" step="any" min="0"></div>
@@ -197,10 +185,7 @@
       <div class="field"><label>現在の株価（円）</label><input id="f-price" type="number" inputmode="decimal" step="any" min="0"></div>
       <div class="field"><label>1株あたり年間配当（円）</label><input id="f-dps" type="number" inputmode="decimal" step="any" min="0"></div>
     </div>
-    <div class="row2">
-      <div class="field"><label>証券会社</label><input id="f-broker" placeholder="例：〇〇証券"></div>
-      <div class="field"><label>配当月</label><input id="f-divmonth" placeholder="例：3月・9月"></div>
-    </div>
+    <div class="field"><label>配当月</label><input id="f-divmonth" placeholder="例：3月・9月"></div>
     <div class="field"><label>メモ</label><textarea id="f-memo" placeholder="購入理由、優待内容など"></textarea></div>
     <div class="preview" id="stock-preview"></div>
     <div class="actions">
@@ -288,8 +273,7 @@
 
   // ---------- 株式テーブル ----------
   const stockCols = [
-    { k: 'name', label: '銘柄', l: true, sticky: true, get: s => s.name, show: s => `${esc(s.name)}${s.code ? `<br><small style="color:var(--sub)">${esc(s.code)}</small>` : ''}` },
-    { k: 'acct', label: '口座', l: true, get: s => s.acct || '', show: s => esc(s.acct || '') },
+    { k: 'name', label: '銘柄', l: true, sticky: true, get: s => s.name, show: s => esc(s.name) },
     { k: 'shares', label: '保有数', get: s => num(s.shares), show: s => num(s.shares).toLocaleString('ja-JP') },
     { k: 'cost', label: '取得単価', get: s => num(s.cost), show: s => s.cost !== '' && s.cost != null ? num(s.cost).toLocaleString('ja-JP') : '-' },
     { k: 'price', label: '株価', get: s => num(s.price), show: s => s.price ? num(s.price).toLocaleString('ja-JP') : '-' },
@@ -300,7 +284,6 @@
     { k: 'div', label: '年間配当', get: s => calcStock(s).divTotal, show: s => yen(calcStock(s).divTotal) },
     { k: 'yield', label: '利回り', get: s => calcStock(s).yieldNow, show: s => pctPlain(calcStock(s).yieldNow) },
     { k: 'divmonth', label: '配当月', l: true, get: s => s.divmonth || '', show: s => esc(s.divmonth || '') },
-    { k: 'broker', label: '証券会社', l: true, get: s => s.broker || '', show: s => esc(s.broker || '') },
     { k: 'memo', label: 'メモ', l: true, get: s => s.memo || '', show: s => `<div class="memo">${esc(s.memo || '')}</div>` },
   ];
   const bankCols = [
@@ -335,7 +318,7 @@
 
   function renderStocks() {
     const q = $('stock-q').value.trim().toLowerCase();
-    const rows = sortRows(db.stocks.filter(s => !q || [s.name, s.code, s.memo, s.broker, s.acct].join(' ').toLowerCase().includes(q)), stockCols, sortState.stocks);
+    const rows = sortRows(db.stocks.filter(s => !q || [s.name, s.memo, s.divmonth].join(' ').toLowerCase().includes(q)), stockCols, sortState.stocks);
     renderHead('stock-head', stockCols, sortState.stocks, 'stocks');
     $('stock-body').innerHTML = rows.length ? rows.map(s =>
       `<tr class="row" data-id="${esc(s.id)}" data-kind="stock">${stockCols.map(c => `<td class="${c.l ? 'l' : ''} ${c.sticky ? 'sticky' : ''}">${c.show(s)}</td>`).join('')}</tr>`).join('')
@@ -358,8 +341,8 @@
   }
 
   function renderSummary() {
-    let sv = 0, sc = 0, pl = 0, dv = 0; const byAcct = {};
-    db.stocks.forEach(s => { const c = calcStock(s); sv += c.value; sc += c.costTotal; pl += c.pl; dv += c.divTotal; const a = s.acct || 'その他'; byAcct[a] = (byAcct[a] || 0) + c.value; });
+    let sv = 0, sc = 0, pl = 0, dv = 0;
+    db.stocks.forEach(s => { const c = calcStock(s); sv += c.value; sc += c.costTotal; pl += c.pl; dv += c.divTotal; });
     const bv = db.banks.reduce((a, b) => a + num(b.balance), 0);
     const total = sv + bv;
     $('s-total').textContent = yen(total);
@@ -372,10 +355,6 @@
     const parts = [['株式', sv, '#2f6fdb'], ['預金', bv, '#2e9e6b']];
     $('s-bar').innerHTML = total > 0 ? parts.map(p => `<div style="width:${p[1] / total * 100}%;background:${p[2]}"></div>`).join('') : '';
     $('s-legend').innerHTML = parts.map(p => `<span><i style="background:${p[2]}"></i>${p[0]} ${total > 0 ? (p[1] / total * 100).toFixed(1) : '0.0'}%</span>`).join('');
-    const ent = Object.entries(byAcct).sort((a, b) => b[1] - a[1]);
-    $('s-byacct').innerHTML = ent.length ? ent.map(([k, v]) =>
-      `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>${esc(k)}</span><span>${yen(v)} <small style="color:var(--sub)">${sv ? (v / sv * 100).toFixed(1) : 0}%</small></span></div>`).join('')
-      : '<div class="note">まだ株式が登録されていません</div>';
     $('s-updated').textContent = db.updatedAt ? '最終更新：' + new Date(db.updatedAt).toLocaleString('ja-JP') : '';
   }
   function renderAll() { renderSummary(); renderStocks(); renderBanks(); }
@@ -388,7 +367,7 @@
   const closeModals = () => { document.querySelectorAll('.modal').forEach(m => m.classList.remove('open')); document.body.style.overflow = ''; editing = null; };
   document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModals(); }));
 
-  const stockFields = { code: 'f-code', acct: 'f-acct', name: 'f-name', shares: 'f-shares', cost: 'f-cost', price: 'f-price', dps: 'f-dps', broker: 'f-broker', divmonth: 'f-divmonth', memo: 'f-memo' };
+  const stockFields = { name: 'f-name', shares: 'f-shares', cost: 'f-cost', price: 'f-price', dps: 'f-dps', divmonth: 'f-divmonth', memo: 'f-memo' };
   const bankFields = { name: 'b-name', branch: 'b-branch', type: 'b-type', balance: 'b-balance', date: 'b-date', purpose: 'b-purpose', memo: 'b-memo' };
 
   function stockPreview() {
@@ -401,7 +380,7 @@
   function openStock(item) {
     editing = item ? item.id : null;
     $('stock-title').textContent = item ? '銘柄を編集' : '銘柄を追加';
-    for (const k in stockFields) $(stockFields[k]).value = item ? (item[k] ?? '') : (k === 'acct' ? '特定' : '');
+    for (const k in stockFields) $(stockFields[k]).value = item ? (item[k] ?? '') : '';
     $('stock-del').classList.toggle('hidden', !item);
     stockPreview(); openModal('stock-modal');
   }
@@ -446,8 +425,8 @@
     const csvCell = (v) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
     let rows;
     if (kind === 'stocks') {
-      rows = [['証券コード', '銘柄名', '口座区分', '保有数', '取得単価', '株価', '評価額', '損益', '損益率(%)', '1株配当', '年間配当', '利回り(%)', '配当月', '証券会社', 'メモ']];
-      db.stocks.forEach(s => { const c = calcStock(s); rows.push([s.code, s.name, s.acct, s.shares, s.cost, s.price, Math.round(c.value), Math.round(c.pl), isFinite(c.plr) ? c.plr.toFixed(2) : '', s.dps, Math.round(c.divTotal), isFinite(c.yieldNow) ? c.yieldNow.toFixed(2) : '', s.divmonth, s.broker, s.memo]); });
+      rows = [['銘柄名', '保有数', '取得単価', '株価', '評価額', '損益', '損益率(%)', '1株配当', '年間配当', '利回り(%)', '配当月', 'メモ']];
+      db.stocks.forEach(s => { const c = calcStock(s); rows.push([s.name, s.shares, s.cost, s.price, Math.round(c.value), Math.round(c.pl), isFinite(c.plr) ? c.plr.toFixed(2) : '', s.dps, Math.round(c.divTotal), isFinite(c.yieldNow) ? c.yieldNow.toFixed(2) : '', s.divmonth, s.memo]); });
     } else {
       rows = [['銀行名', '支店名', '種別', '残高', '確認日', '用途', 'メモ']];
       db.banks.forEach(b => rows.push([b.name, b.branch, b.type, b.balance, b.date, b.purpose, b.memo]));
