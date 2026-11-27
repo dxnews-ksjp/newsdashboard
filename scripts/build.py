@@ -112,7 +112,7 @@ def render_card(topic, items, error, show_items):
 
 # 選ばれているタブの見た目：上側に内側の影を入れて、ボタンが沈み込んだように見せる
 ACTIVE_TAB_STYLE = (
-    "background: linear-gradient(180deg, color-mix(in srgb, var(--tab-color) 80%, #2a2f36) 0%, var(--tab-color) 100%); color: var(--tab-ink); border-color: var(--tab-edge); "
+    "background: linear-gradient(180deg, color-mix(in srgb, var(--tab-color) 80%, #2a2f36) 0%, var(--tab-color) 100%); color: var(--tab-ink); "
     "box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.38), inset 0 1px 2px rgba(0, 0, 0, 0.3); "
     "transform: translateY(1px);"
 )

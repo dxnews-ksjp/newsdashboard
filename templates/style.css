@@ -223,15 +223,15 @@ body::before {
 }
 
 /* タブの色（--tab-color）は topics.toml で指定。
-   文字色・ふちの色はその色から自動で作ります。
+   影の色などはその色から自動で作ります。
    マットな質感で、下に向かって少し暗くなるグラデーションで立体感を出しています。
    選ばれているタブは、内側の影で押し込まれた見た目にします */
 .tab {
   --tab-ink: #ffffff;
   --tab-edge: color-mix(in srgb, var(--tab-color) 55%, #3a3f46);
   flex: 0 1 180px;
-  padding: 9px 16px;
-  border: 1px solid var(--tab-edge);
+  padding: 10px 17px;
+  border: none;  /* 縁取りの線はなし */
   border-radius: 999px;
   background: linear-gradient(180deg,
     color-mix(in srgb, var(--tab-color) 90%, #ffffff) 0%,
@@ -398,7 +398,7 @@ body::before {
   .updated { padding: 2px 10px; font-size: 0.72rem; }
   .tab-bar { padding: 10px 12px 0; }
   .tab-bar .inner { padding: 6px; gap: 6px; }
-  .tab { flex: 1 1 0; padding: 8px 6px; font-size: 1rem; letter-spacing: 0.05em; }
+  .tab { flex: 1 1 0; padding: 9px 7px; font-size: 1rem; letter-spacing: 0.05em; }
   .grid {
     grid-template-columns: 1fr;
     padding: 12px;
