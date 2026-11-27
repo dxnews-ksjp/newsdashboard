@@ -227,16 +227,17 @@ body::before {
    マットな質感で、下に向かって少し暗くなるグラデーションで立体感を出しています。
    選ばれているタブは、内側の影で押し込まれた見た目にします */
 .tab {
-  --tab-ink: color-mix(in srgb, var(--tab-color) 30%, #1e2329);
+  --tab-ink: #ffffff;
   --tab-edge: color-mix(in srgb, var(--tab-color) 55%, #3a3f46);
   flex: 0 1 180px;
   padding: 9px 16px;
   border: 1px solid var(--tab-edge);
   border-radius: 999px;
   background: linear-gradient(180deg,
-    color-mix(in srgb, var(--tab-color) 80%, #ffffff) 0%,
-    color-mix(in srgb, var(--tab-color) 85%, #2a2f36) 100%);
+    color-mix(in srgb, var(--tab-color) 90%, #ffffff) 0%,
+    color-mix(in srgb, var(--tab-color) 82%, #2a2f36) 100%);
   color: var(--tab-ink);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);  /* 白い文字を読みやすく */
   font-size: 1.05rem;
   font-weight: 700;
   text-align: center;
